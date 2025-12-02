@@ -15,7 +15,7 @@ function send(options) {
   });
 
   const requestOptions = {
-    hostname: 'your-app-domain.com', // You will need to replace this with your actual domain
+    hostname: 'emailsenderpro.vercel.app',
     port: 443,
     path: '/api/send-email',
     method: 'POST',

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/components/theme-provider';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'EmailSenderPro',
@@ -23,11 +25,31 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body bg-background antialiased">
-        <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider>
+      <body className="font-body bg-background antialiased flex flex-col min-h-screen">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <div className="flex-grow">{children}</div>
+            <footer className="w-full border-t border-border/50 py-6 px-4 md:px-6">
+              <div className="container mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground">
+                <p>&copy; {new Date().getFullYear()} EmailSenderPro. All rights reserved.</p>
+                <div className="flex items-center gap-4 mt-4 md:mt-0">
+                  <Link href="/tos" className="hover:text-primary transition-colors">
+                    Terms of Service
+                  </Link>
+                  <Link href="/privacy" className="hover:text-primary transition-colors">
+                    Privacy Policy
+                  </Link>
+                </div>
+              </div>
+            </footer>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

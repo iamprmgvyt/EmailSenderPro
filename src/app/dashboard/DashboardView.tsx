@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ModeToggle } from '@/components/mode-toggle';
 
 interface DashboardViewProps {
     apiKey: string;
@@ -47,6 +48,7 @@ export default function DashboardView({ apiKey }: DashboardViewProps) {
                 <Copy className="mr-2 h-4 w-4" />
                 Copy API Key
             </Button>
+            <ModeToggle />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button
