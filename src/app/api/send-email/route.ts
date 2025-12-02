@@ -29,17 +29,20 @@ export async function POST(req: Request) {
     }
 
     const { to, subject, body } = await req.json();
-    if (!to || !subject || !body) {
-        return NextResponse.json({ message: 'Missing parameters: to, subject, and body are required.' }, { status: 400 });
+    if (!to || !body) {
+        return NextResponse.json({ message: 'Missing parameters: to and body are required.' }, { status: 400 });
     }
+
+    const finalSubject = subject || user.emailConfig.defaultSubject || 'No Subject';
+    const from = user.emailConfig.fromName ? `${user.emailConfig.fromName} <${user.email}>` : user.email;
 
     // This is where you would integrate with a real email sending service
     // like SendGrid, Mailgun, AWS SES, etc.
     // For this example, we'll just simulate sending an email.
+    console.log(`Simulating email send from: ${from}`);
     console.log(`Simulating email send to: ${to}`);
-    console.log(`Subject: ${subject}`);
+    console.log(`Subject: ${finalSubject}`);
     console.log(`Body: ${body}`);
-    console.log(`Sent by user: ${user.email}`);
     
     // Increment the user's daily sent count
     user.dailySent.count += 1;

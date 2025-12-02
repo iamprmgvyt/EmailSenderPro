@@ -56,7 +56,7 @@ export default async function DashboardPage() {
     const partiallyHiddenApiKey = `${data.apiKey.substring(0, 5)}...${data.apiKey.substring(data.apiKey.length - 5)}`;
 
     return (
-        <div className="flex min-h-screen w-full flex-col bg-muted/40">
+        <>
             <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 py-4">
                 <h1 className="font-headline text-2xl font-bold text-primary">EmailSenderPro Dashboard</h1>
                 <DashboardView apiKey={data.apiKey} />
@@ -122,6 +122,6 @@ sender.send({
                     </div>
                 </Alert>
             </main>
-        </div>
+        </>
     );
 }

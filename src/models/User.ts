@@ -6,11 +6,17 @@ export interface IDailySent {
   date: string;
 }
 
+export interface IEmailConfig {
+    fromName: string;
+    defaultSubject: string;
+}
+
 export interface IUser extends Document {
   email: string;
   password?: string;
   apiKey: string;
   dailySent: IDailySent;
+  emailConfig: IEmailConfig;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -41,6 +47,16 @@ const UserSchema: Schema<IUser> = new Schema(
         default: () => new Date().toISOString().split('T')[0],
       },
     },
+    emailConfig: {
+        fromName: {
+            type: String,
+            default: '',
+        },
+        defaultSubject: {
+            type: String,
+            default: '',
+        }
+    }
   },
   { timestamps: true }
 );
