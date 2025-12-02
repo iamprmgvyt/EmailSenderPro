@@ -3,49 +3,51 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-
 const PROTECTED_ROUTES = ['/dashboard'];
-const PUBLIC_ONLY_ROUTES = ['/login', '/signup'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get('token')?.value;
 
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+
   if (!JWT_SECRET) {
     console.error('JWT_SECRET is not defined. Authentication will not work.');
-    return NextResponse.redirect(new URL('/login', req.url));
-  }
-  
-  let isVerified = false;
-  try {
-    if (token) {
-      await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
-      isVerified = true;
-    }
-  } catch (err) {
-    // Token is invalid or expired
-    isVerified = false;
-  }
-
-  const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
-  const isPublicOnlyRoute = PUBLIC_ONLY_ROUTES.includes(pathname);
-
-  if (isVerified) {
-    // If user is logged in, redirect them from public-only pages to dashboard
-    if (isPublicOnlyRoute) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
-  } else {
-    // If user is not logged in, redirect them from protected pages to login
     if (isProtectedRoute) {
+        return NextResponse.redirect(new URL('/login', req.url));
+    }
+    return NextResponse.next();
+  }
+
+  // If the user is trying to access a protected route
+  if (isProtectedRoute) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', req.url));
+    }
+
+    try {
+      // Verify the token
+      await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+      // If token is valid, allow access to the protected route
+      return NextResponse.next();
+    } catch (err) {
+      // If token is invalid, redirect to login and clear the invalid cookie
       const response = NextResponse.redirect(new URL('/login', req.url));
-      // Clear any invalid token that might be present
       response.cookies.delete('token');
       return response;
     }
   }
-  
-  // Allow the request to proceed
+
+  // If the user is authenticated and tries to access login or signup, redirect them to dashboard
+  if (token && (pathname === '/login' || pathname === '/signup')) {
+     try {
+        await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+        return NextResponse.redirect(new URL('/dashboard', req.url));
+     } catch (e) {
+        // Invalid token, let them proceed to login/signup
+     }
+  }
+
   return NextResponse.next();
 }
 

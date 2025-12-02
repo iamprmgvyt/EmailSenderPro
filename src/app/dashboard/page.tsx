@@ -4,6 +4,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { BarChart, Key, Eye, EyeOff } from 'lucide-react';
 import DashboardView from './DashboardView';
+import { jwtVerify } from 'jose';
+import dbConnect from '@/lib/dbConnect';
+import User, { IUser } from '@/models/User';
+
 
 interface DashboardData {
     apiKey: string;
@@ -13,28 +17,43 @@ interface DashboardData {
     };
 }
 
+interface JwtPayload {
+  id: string;
+}
+
 async function getDashboardData(): Promise<DashboardData | null> {
     const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
 
-    if (!token) return null;
+    if (!token || !process.env.JWT_SECRET) return null;
 
-    // In a real app, you might want to use a more robust way to get the base URL
-    const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:9002';
-    
     try {
-        const res = await fetch(`${baseUrl}/api/dashboard-data`, {
-            headers: {
-                'Cookie': `token=${token}`
-            },
-            cache: 'no-store' // Ensure fresh data
-        });
+        const { payload } = await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET));
+        const userId = (payload as JwtPayload).id;
 
-        if (!res.ok) {
+        await dbConnect();
+        const user: IUser | null = await User.findById(userId).select('apiKey dailySent');
+
+        if (!user) {
             return null;
         }
 
-        return res.json();
+        // Reset daily count if the date has changed
+        const today = new Date().toISOString().split('T')[0];
+        if (user.dailySent.date !== today) {
+            user.dailySent.count = 0;
+            user.dailySent.date = today;
+            await user.save();
+        }
+
+        return {
+            apiKey: user.apiKey,
+            dailySent: {
+                count: user.dailySent.count,
+                date: user.dailySent.date,
+            },
+        };
+
     } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
         return null;
