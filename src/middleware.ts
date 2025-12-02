@@ -1,51 +1,57 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verify } from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export function middleware(req: NextRequest) {
+// This function can be marked `async` if using `await` inside
+export async function middleware(req: NextRequest) {
   if (!JWT_SECRET) {
     console.error('JWT_SECRET is not defined. Middleware cannot run.');
-    // In a real app, you might want to show a generic error page
-    // or redirect to a maintenance page.
-    // For now, we'll just block the request to avoid security issues.
     return new NextResponse('Server configuration error.', { status: 500 });
   }
 
   const token = req.cookies.get('token')?.value;
   const { pathname } = req.nextUrl;
 
-  // Protect dashboard route
-  if (pathname.startsWith('/dashboard')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url));
-    }
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+  let isTokenValid = false;
+  if (token) {
     try {
-      verify(token, JWT_SECRET);
-      return NextResponse.next();
+      await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+      isTokenValid = true;
     } catch (err) {
+      // Token is invalid
+      isTokenValid = false;
+    }
+  }
+
+  // If user is authenticated
+  if (isTokenValid) {
+    // and they are trying to access login/signup, redirect to dashboard
+    if (isAuthPage) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+    // Otherwise, let them proceed
+    return NextResponse.next();
+  }
+
+  // If user is NOT authenticated
+  if (!isTokenValid) {
+    // and they are trying to access a protected page (not login/signup), redirect to login
+    if (!isAuthPage) {
       const response = NextResponse.redirect(new URL('/login', req.url));
-      response.cookies.delete('token');
+      // If there was an invalid token, clear it
+      if (token) {
+        response.cookies.delete('token');
+      }
       return response;
     }
+    // If they are on the login/signup page, let them proceed
+    return NextResponse.next();
   }
-
-  // Redirect logged-in users from login or signup page to dashboard
-  if (pathname === '/login' || pathname === '/signup') {
-    if (token) {
-      try {
-        verify(token, JWT_SECRET);
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      } catch (err) {
-        // Invalid token, allow access to page but clear the bad cookie
-        const response = NextResponse.next();
-        response.cookies.delete('token');
-        return response;
-      }
-    }
-  }
-
+  
   return NextResponse.next();
 }
 
