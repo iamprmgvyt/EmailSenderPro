@@ -45,9 +45,6 @@ MONGODB_URI="your_mongodb_connection_string"
 # A strong, secret key for signing JSON Web Tokens (JWT)
 # You can generate one using: openssl rand -base64 32
 JWT_SECRET="your_strong_jwt_secret"
-
-# How long the JWT should be valid for (e.g., 1d, 7d, 30m)
-JWT_EXPIRES_IN="1d"
 ```
 
 ### 4. Run the Development Server
