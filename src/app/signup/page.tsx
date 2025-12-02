@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,19 +18,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Lock, LogIn } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import Link from 'next/link';
+import { Mail, Lock, UserPlus } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+  password: z.string().min(8, { message: 'Password must be at least 8 characters long.' }),
 });
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { setIsLoggedIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -43,7 +41,7 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -52,19 +50,17 @@ export default function LoginPage() {
       if (response.ok) {
         toast({
           title: 'Success!',
-          description: 'You have been logged in successfully.',
+          description: 'Your account has been created. Please sign in.',
         });
-        setIsLoggedIn(true);
-        router.push('/dashboard');
-        router.refresh();
+        router.push('/login');
       } else {
         const data = await response.json();
-        throw new Error(data.message || 'Login failed.');
+        throw new Error(data.message || 'Sign up failed.');
       }
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
+        title: 'Sign Up Failed',
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
@@ -77,7 +73,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <h1 className="font-headline text-3xl font-bold text-primary">EmailSenderPro</h1>
-          <CardDescription>Sign in to your dashboard</CardDescription>
+          <CardDescription>Create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -121,20 +117,20 @@ export default function LoginPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Signing In...
+                    Creating Account...
                   </>
                 ) : (
                   <>
-                    <LogIn className="mr-2 h-4 w-4" /> Sign In
+                    <UserPlus className="mr-2 h-4 w-4" /> Create Account
                   </>
                 )}
               </Button>
             </form>
           </Form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link href="/signup" className="font-semibold text-primary hover:underline">
-              Sign Up
+           <p className="mt-6 text-center text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <Link href="/login" className="font-semibold text-primary hover:underline">
+              Sign In
             </Link>
           </p>
         </CardContent>

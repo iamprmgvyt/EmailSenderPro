@@ -31,14 +31,14 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // Redirect logged-in users from login page to dashboard
-  if (pathname === '/login') {
+  // Redirect logged-in users from login or signup page to dashboard
+  if (pathname === '/login' || pathname === '/signup') {
     if (token) {
       try {
         verify(token, JWT_SECRET);
         return NextResponse.redirect(new URL('/dashboard', req.url));
       } catch (err) {
-        // Invalid token, allow access to login page but clear the bad cookie
+        // Invalid token, allow access to page but clear the bad cookie
         const response = NextResponse.next();
         response.cookies.delete('token');
         return response;
@@ -50,5 +50,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/login', '/signup'],
 };
