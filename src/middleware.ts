@@ -5,7 +5,7 @@ import { jwtVerify } from 'jose';
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const PROTECTED_ROUTES = ['/dashboard'];
-const PUBLIC_ROUTES = ['/login', '/signup', '/privacy', '/tos'];
+const PUBLIC_ONLY_ROUTES = ['/login', '/signup'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -13,41 +13,44 @@ export async function middleware(req: NextRequest) {
 
   if (!JWT_SECRET) {
     console.error('JWT_SECRET is not defined. Authentication will not work.');
-    return new NextResponse('Server configuration error.', { status: 500 });
+    // In production, better to not expose this error.
+    if (process.env.NODE_ENV === 'development') {
+      return new NextResponse('Server configuration error.', { status: 500 });
+    }
+    // Fail gracefully in production
+    return NextResponse.redirect(new URL('/login', req.url));
   }
-
+  
   let isVerified = false;
-  if (token) {
-    try {
+  try {
+    if (token) {
       await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
       isVerified = true;
-    } catch (err) {
-      isVerified = false;
     }
+  } catch (err) {
+    // Token is invalid
+    isVerified = false;
   }
 
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  const isPublicOnlyRoute = PUBLIC_ONLY_ROUTES.includes(pathname);
 
-  // If user is verified
   if (isVerified) {
-    // If they are on a public-only route (like login), redirect to dashboard
-    if (PUBLIC_ROUTES.includes(pathname)) {
+    // If user is logged in, redirect them from public-only pages to dashboard
+    if (isPublicOnlyRoute) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-    // Otherwise, let them proceed
-    return NextResponse.next();
-  }
-
-  // If user is not verified
-  // and they are trying to access a protected route, redirect to login
-  if (!isVerified && isProtectedRoute) {
-    const response = NextResponse.redirect(new URL('/login', req.url));
-    // Clear any invalid token
-    response.cookies.delete('token');
-    return response;
+  } else {
+    // If user is not logged in, redirect them from protected pages to login
+    if (isProtectedRoute) {
+      const response = NextResponse.redirect(new URL('/login', req.url));
+      // Clear any invalid token that might be present
+      response.cookies.delete('token');
+      return response;
+    }
   }
   
-  // Otherwise, let them proceed
+  // Allow the request to proceed
   return NextResponse.next();
 }
 
