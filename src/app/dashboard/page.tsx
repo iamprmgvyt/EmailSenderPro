@@ -2,10 +2,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BarChart, Key, LogOut } from 'lucide-react';
+import { BarChart, Key } from 'lucide-react';
 import DashboardView from './DashboardView';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
 interface DashboardData {
     apiKey: string;
@@ -126,7 +124,3 @@ sender.send({
         </div>
     );
 }
-
-// Simple fade-in animation for tailwind.config.ts if needed
-// keyframes: { 'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } } }
-// animation: { 'fade-in': 'fade-in 0.5s ease-in-out' }
