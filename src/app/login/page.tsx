@@ -52,7 +52,6 @@ export default function LoginPage() {
       if (response.ok) {
         setIsLoggedIn(true);
         router.push('/dashboard');
-        router.refresh();
         toast({
           title: 'Success!',
           description: 'You have been logged in successfully.',
