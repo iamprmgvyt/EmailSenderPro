@@ -20,7 +20,6 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
-  const isDashboardPage = pathname.startsWith('/dashboard');
 
   let isTokenValid = false;
   if (token) {
@@ -46,9 +45,7 @@ export async function middleware(req: NextRequest) {
   // If the user is NOT authenticated
   // and they are trying to access a protected page, redirect to login
   if (!isAuthPage) {
-    let loginUrl = new URL('/login', req.url);
-    // If they were trying to access a specific page, we can redirect them back after login
-    // loginUrl.searchParams.set('next', pathname);
+    const loginUrl = new URL('/login', req.url);
     const response = NextResponse.redirect(loginUrl);
     
     // Clear any invalid token cookie to prevent loops
