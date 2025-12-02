@@ -51,9 +51,8 @@ export default function LoginPage() {
 
       if (response.ok) {
         setIsLoggedIn(true);
-        // This is the most critical part for redirection.
-        // We will force a redirect to the dashboard.
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
+        router.refresh();
         toast({
           title: 'Success!',
           description: 'You have been logged in successfully.',
