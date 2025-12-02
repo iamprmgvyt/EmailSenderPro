@@ -13,11 +13,6 @@ export async function middleware(req: NextRequest) {
 
   if (!JWT_SECRET) {
     console.error('JWT_SECRET is not defined. Authentication will not work.');
-    // In production, better to not expose this error.
-    if (process.env.NODE_ENV === 'development') {
-      return new NextResponse('Server configuration error.', { status: 500 });
-    }
-    // Fail gracefully in production
     return NextResponse.redirect(new URL('/login', req.url));
   }
   
@@ -28,7 +23,7 @@ export async function middleware(req: NextRequest) {
       isVerified = true;
     }
   } catch (err) {
-    // Token is invalid
+    // Token is invalid or expired
     isVerified = false;
   }
 
