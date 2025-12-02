@@ -1,7 +1,23 @@
 {
   "name": "emailsenderpro",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "A simple client library for sending emails via the EmailSenderPro API.",
+  "main": "src/lib/emailsenderpro.js",
+  "files": [
+    "src/lib/emailsenderpro.js"
+  ],
+  "keywords": [
+    "email",
+    "api",
+    "sender"
+  ],
+  "author": "iamprmgvyt",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iamprmgvyt/EmailSenderPro.git"
+  },
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
