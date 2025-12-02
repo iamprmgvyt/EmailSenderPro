@@ -2,9 +2,17 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verify } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export function middleware(req: NextRequest) {
+  if (!JWT_SECRET) {
+    console.error('JWT_SECRET is not defined. Middleware cannot run.');
+    // In a real app, you might want to show a generic error page
+    // or redirect to a maintenance page.
+    // For now, we'll just block the request to avoid security issues.
+    return new NextResponse('Server configuration error.', { status: 500 });
+  }
+
   const token = req.cookies.get('token')?.value;
   const { pathname } = req.nextUrl;
 
@@ -17,7 +25,9 @@ export function middleware(req: NextRequest) {
       verify(token, JWT_SECRET);
       return NextResponse.next();
     } catch (err) {
-      return NextResponse.redirect(new URL('/login', req.url));
+      const response = NextResponse.redirect(new URL('/login', req.url));
+      response.cookies.delete('token');
+      return response;
     }
   }
 
@@ -28,8 +38,10 @@ export function middleware(req: NextRequest) {
         verify(token, JWT_SECRET);
         return NextResponse.redirect(new URL('/dashboard', req.url));
       } catch (err) {
-        // Invalid token, allow access to login page
-        return NextResponse.next();
+        // Invalid token, allow access to login page but clear the bad cookie
+        const response = NextResponse.next();
+        response.cookies.delete('token');
+        return response;
       }
     }
   }

@@ -4,13 +4,21 @@ import dbConnect from '@/lib/dbConnect';
 import User, { IUser } from '@/models/User';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 interface JwtPayload {
   id: string;
 }
 
 export async function GET() {
+  if (!JWT_SECRET) {
+    console.error('JWT_SECRET is not defined in .env');
+    return NextResponse.json(
+      { message: 'Server configuration error.' },
+      { status: 500 }
+    );
+  }
+
   try {
     await dbConnect();
     const cookieStore = cookies();

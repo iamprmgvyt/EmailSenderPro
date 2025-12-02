@@ -4,10 +4,18 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 
 export async function POST(req: Request) {
+  if (!JWT_SECRET || !JWT_EXPIRES_IN) {
+    console.error('JWT_SECRET or JWT_EXPIRES_IN is not defined in .env');
+    return NextResponse.json(
+      { message: 'Server configuration error.' },
+      { status: 500 }
+    );
+  }
+
   try {
     await dbConnect();
 
