@@ -88,20 +88,20 @@ export default async function DashboardPage() {
                         </CardContent>
                     </Card>
                 </div>
-                 <Alert className="bg-card">
+                 <Alert className="bg-card animate-fade-in">
                     <Key className="h-4 w-4" />
                     <AlertTitle className="font-headline">Your API Key</AlertTitle>
                     <AlertDescription className="mt-2">
                         Use this key to send emails via our service. Keep it secure!
                     </AlertDescription>
                     <div className="mt-4 flex items-center gap-4">
-                        <code className="relative flex-grow rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold animate-fade-in">
+                        <code className="relative flex-grow rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
                            {partiallyHiddenApiKey}
                         </code>
                     </div>
                 </Alert>
 
-                <Alert className="bg-card">
+                <Alert className="bg-card animate-fade-in [animation-delay:200ms]">
                     <AlertTitle className="font-headline">Example Usage</AlertTitle>
                     <AlertDescription className="mt-2">
                         Here&apos;s a basic example of how to use our NPM package:
