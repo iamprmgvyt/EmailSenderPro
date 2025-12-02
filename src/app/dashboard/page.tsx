@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BarChart, Key } from 'lucide-react';
+import { BarChart, Key, Eye, EyeOff } from 'lucide-react';
 import DashboardView from './DashboardView';
 
 interface DashboardData {
@@ -53,6 +53,7 @@ export default async function DashboardPage() {
     const DAILY_LIMIT = 10;
     const sentToday = data.dailySent.count;
     const remaining = DAILY_LIMIT - sentToday;
+    const partiallyHiddenApiKey = `${data.apiKey.substring(0, 5)}...${data.apiKey.substring(data.apiKey.length - 5)}`;
 
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -95,7 +96,7 @@ export default async function DashboardPage() {
                     </AlertDescription>
                     <div className="mt-4 flex items-center gap-4">
                         <code className="relative flex-grow rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold animate-fade-in">
-                            {data.apiKey}
+                           {partiallyHiddenApiKey}
                         </code>
                     </div>
                 </Alert>
@@ -108,10 +109,10 @@ export default async function DashboardPage() {
                     <div className="mt-4 rounded-md bg-muted p-4">
                         <pre className="text-sm font-code">
                             <code>
-{`const sender = require('my-email-sender');
+{`const sender = require('emailsenderpro');
 
 sender.send({ 
-  apiKey: '${data.apiKey.substring(0, 15)}...', 
+  apiKey: 'YOUR_API_KEY_HERE', 
   to: 'recipient@example.com',
   subject: 'Hello World',
   body: 'This is a test email.'
