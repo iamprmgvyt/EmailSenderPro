@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
+import nodemailer from 'nodemailer';
 
 const DAILY_LIMIT = 10;
 const SENDER_EMAIL = process.env.EMAIL_FROM;
+const SENDER_PASSWORD = process.env.EMAIL_PASSWORD;
 
 export async function POST(req: Request) {
-  if (!SENDER_EMAIL) {
-    console.error('EMAIL_FROM is not defined in .env');
+  if (!SENDER_EMAIL || !SENDER_PASSWORD) {
+    console.error('EMAIL_FROM and EMAIL_PASSWORD are not defined in .env');
     return NextResponse.json(
-      { message: 'Server configuration error: Sender email is not configured.' },
+      { message: 'Server configuration error: Email service is not configured.' },
       { status: 500 }
     );
   }
@@ -43,26 +45,38 @@ export async function POST(req: Request) {
     }
 
     const finalSubject = subject || user.emailConfig.defaultSubject || 'No Subject';
-    const from = user.emailConfig.fromName ? `${user.emailConfig.fromName} <${SENDER_EMAIL}>` : SENDER_EMAIL;
+    const from = user.emailConfig.fromName ? `"${user.emailConfig.fromName}" <${SENDER_EMAIL}>` : SENDER_EMAIL;
 
-    // This is where you would integrate with a real email sending service
-    // like SendGrid, Mailgun, AWS SES, etc.
-    // For this example, we'll just simulate sending an email.
-    console.log(`Simulating email send from: ${from}`);
-    console.log(`Simulating email send to: ${to}`);
-    console.log(`Subject: ${finalSubject}`);
-    console.log(`Body: ${body}`);
+    // Create a transporter for sending email via Gmail
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: SENDER_EMAIL,
+            pass: SENDER_PASSWORD,
+        },
+    });
+
+    // Define email options
+    const mailOptions = {
+        from: from,
+        to: to,
+        subject: finalSubject,
+        html: body, // Use html for rich text emails
+    };
+
+    // Send the email
+    await transporter.sendMail(mailOptions);
     
     // Increment the user's daily sent count
     user.dailySent.count += 1;
     await user.save();
 
-    return NextResponse.json({ message: 'Email sent successfully (simulated).' }, { status: 200 });
+    return NextResponse.json({ message: 'Email sent successfully.' }, { status: 200 });
 
   } catch (error) {
     console.error('Send email error:', error);
     return NextResponse.json(
-      { message: 'An internal server error occurred.' },
+      { message: 'An internal server error occurred while sending the email.' },
       { status: 500 }
     );
   }
