@@ -1,5 +1,17 @@
 # EmailSenderPro: Your Own Email Sending API Platform
 
+**Languages:**
+- [English](#english)
+- [Tiếng Việt (Vietnamese)](#vietnamese)
+- [Español (Spanish)](#spanish)
+- [Français (French)](#french)
+- [Deutsch (German)](#german)
+- [简体中文 (Simplified Chinese)](#chinese)
+- [日本語 (Japanese)](#japanese)
+
+---
+<h2 id="english">English</h2>
+
 EmailSenderPro is a powerful, full-stack Next.js application that provides a simple and secure API for sending emails. It's designed for developers who need a quick solution to integrate email functionality into their projects without the hassle of complex service setups.
 
 The application includes user authentication, a dashboard for managing API keys, usage statistics, and email customization capabilities.
@@ -474,6 +486,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE.md) fi
 
 ---
 ---
+<h2 id="vietnamese">Tiếng Việt (Vietnamese)</h2>
 
 # EmailSenderPro: Nền tảng gửi Email API của riêng bạn
 
@@ -487,30 +500,30 @@ EmailSenderPro là một ứng dụng Next.js full-stack mạnh mẽ, cung cấp
 
 ## Mục lục
 
-1.  [Tính năng chính](#tính-năng-chính)
-2.  [Bắt đầu](#bắt-đầu)
-    *   [Yêu cầu tiên quyết](#yêu-cầu-tiên-quyết)
-    *   [1. Sao chép Repository](#1-sao-chép-repository)
-    *   [2. Cài đặt Dependencies](#2-cài-đặt-dependencies)
-    *   [3. Thiết lập Biến môi trường](#3-thiết-lập-biến-môi-trường)
-    *   [4. Chạy Development Server](#4-chạy-development-server)
-3.  [Cách sử dụng](#cách-sử-dụng)
-4.  [Tổng quan về API](#tổng-quan-về-api)
-    *   [Xác thực](#xác-thực)
-    *   [Endpoint: Gửi Email](#endpoint-gửi-email)
-    *   [Các mã phản hồi phổ biến](#các-mã-phản-hồi-phổ-biến)
-5.  [Hướng dẫn sử dụng API chi tiết](#hướng-dẫn-sử-dụng-api-chi-tiết)
-    *   [Ví dụ JavaScript / Node.js](#ví-dụ-javascript--nodejs)
-    *   [Ví dụ Python](#ví-dụ-python)
-    *   [Ví dụ cURL](#ví-dụ-curl)
-6.  [Cấu trúc dự án](#cấu-trúc-dự-án)
-7.  [Triển khai](#triển-khai)
-8.  [Câu hỏi thường gặp (FAQ)](#câu-hỏi-thường-gặp-faq)
-9.  [Giấy phép](#giấy-phép)
+1.  [Tính năng chính](#tính-năng-chính-vi)
+2.  [Bắt đầu](#bắt-đầu-vi)
+    *   [Yêu cầu tiên quyết](#yêu-cầu-tiên-quyết-vi)
+    *   [1. Sao chép Repository](#1-sao-chép-repository-vi)
+    *   [2. Cài đặt Dependencies](#2-cài-đặt-dependencies-vi)
+    *   [3. Thiết lập Biến môi trường](#3-thiết-lập-biến-môi-trường-vi)
+    *   [4. Chạy Development Server](#4-chạy-development-server-vi)
+3.  [Cách sử dụng](#cách-sử-dụng-vi)
+4.  [Tổng quan về API](#tổng-quan-về-api-vi)
+    *   [Xác thực](#xác-thực-vi)
+    *   [Endpoint: Gửi Email](#endpoint-gửi-email-vi)
+    *   [Các mã phản hồi phổ biến](#các-mã-phản-hồi-phổ-biến-vi)
+5.  [Hướng dẫn sử dụng API chi tiết](#hướng-dẫn-sử-dụng-api-chi-tiết-vi)
+    *   [Ví dụ JavaScript / Node.js](#ví-dụ-javascript--nodejs-vi)
+    *   [Ví dụ Python](#ví-dụ-python-vi)
+    *   [Ví dụ cURL](#ví-dụ-curl-vi)
+6.  [Cấu trúc dự án](#cấu-trúc-dự-án-vi)
+7.  [Triển khai](#triển-khai-vi)
+8.  [Câu hỏi thường gặp (FAQ)](#câu-hỏi-thường-gặp-faq-vi)
+9.  [Giấy phép](#giấy-phép-vi)
 
 ---
 
-## Tính năng chính
+## Tính năng chính {#tính-năng-chính-vi}
 
 *   🔐 **Xác thực người dùng**: Chức năng đăng ký và đăng nhập an toàn sử dụng JWT (JSON Web Tokens).
 *   🔑 **Quản lý Khóa API**: Mỗi người dùng có một khóa API duy nhất được hiển thị trên bảng điều khiển.
@@ -522,18 +535,18 @@ EmailSenderPro là một ứng dụng Next.js full-stack mạnh mẽ, cung cấp
 
 ---
 
-## Bắt đầu
+## Bắt đầu {#bắt-đầu-vi}
 
 Làm theo các hướng dẫn sau để có một bản sao cục bộ và chạy ứng dụng.
 
-### Yêu cầu tiên quyết
+### Yêu cầu tiên quyết {#yêu-cầu-tiên-quyết-vi}
 
 *   [Node.js](https://nodejs.org/) (khuyến nghị v18 trở lên)
 *   [npm](https://www.npmjs.com/) hoặc [yarn](https://yarnpkg.com/)
 *   Một cơ sở dữ liệu [MongoDB](https://www.mongodb.com/) và chuỗi kết nối của nó.
 *   Một tài khoản Gmail và một **Mật khẩu ứng dụng**.
 
-### 1. Sao chép Repository
+### 1. Sao chép Repository {#1-sao-chép-repository-vi}
 
 Mở terminal của bạn và chạy lệnh sau:
 ```bash
@@ -541,14 +554,14 @@ git clone https://github.com/iamprmgvyt/EmailSenderPro.git
 cd EmailSenderPro
 ```
 
-### 2. Cài đặt Dependencies
+### 2. Cài đặt Dependencies {#2-cài-đặt-dependencies-vi}
 
 Sử dụng npm (hoặc yarn) để cài đặt tất cả các gói cần thiết cho dự án.
 ```bash
 npm install
 ```
 
-### 3. Thiết lập Biến môi trường
+### 3. Thiết lập Biến môi trường {#3-thiết-lập-biến-môi-trường-vi}
 
 Tạo một tệp có tên `.env` trong thư mục gốc của dự án và thêm các biến môi trường sau. Thay thế các giá trị giữ chỗ bằng dữ liệu thực tế của bạn.
 
@@ -575,7 +588,7 @@ EMAIL_FROM="your_email@gmail.com"
 EMAIL_PASSWORD="your_app_password_here"
 ```
 
-### 4. Chạy Development Server
+### 4. Chạy Development Server {#4-chạy-development-server-vi}
 
 Bây giờ bạn đã sẵn sàng để khởi động máy chủ phát triển.
 ```bash
@@ -586,7 +599,7 @@ Mở [http://localhost:9002](http://localhost:9002) trên trình duyệt của b
 
 ---
 
-## Cách sử dụng
+## Cách sử dụng {#cách-sử-dụng-vi}
 
 1.  **Đăng ký**: Tạo một tài khoản mới tại `/signup`.
 2.  **Đăng nhập**: Đăng nhập vào tài khoản của bạn tại `/login`.
@@ -596,16 +609,16 @@ Mở [http://localhost:9002](http://localhost:9002) trên trình duyệt của b
 
 ---
 
-## Tổng quan về API
+## Tổng quan về API {#tổng-quan-về-api-vi}
 
-### Xác thực
+### Xác thực {#xác-thực-vi}
 
 API sử dụng xác thực bằng khóa API. Bạn phải cung cấp khóa API của mình trong header HTTP của mỗi yêu cầu gửi email.
 
 *   **Header**: `x-api-key`
 *   **Giá trị**: `YOUR_API_KEY_HERE`
 
-### Endpoint: Gửi Email
+### Endpoint: Gửi Email {#endpoint-gửi-email-vi}
 
 *   **URL**: `/api/send-email`
 *   **Phương thức**: `POST`
@@ -617,7 +630,7 @@ API sử dụng xác thực bằng khóa API. Bạn phải cung cấp khóa API 
     *   `body` (string, **bắt buộc**): Nội dung của email. Có thể là văn bản thuần túy hoặc HTML.
     *   `subject` (string, *tùy chọn*): Dòng tiêu đề email. Nếu bỏ qua, nó sẽ sử dụng tiêu đề mặc định từ cài đặt trên bảng điều khiển của bạn.
 
-### Các mã phản hồi phổ biến
+### Các mã phản hồi phổ biến {#các-mã-phản-hồi-phổ-biến-vi}
 
 *   `200 OK`: Email đã được gửi thành công.
 *   `400 Bad Request`: Thiếu các tham số bắt buộc như `to` hoặc `body`.
@@ -627,11 +640,11 @@ API sử dụng xác thực bằng khóa API. Bạn phải cung cấp khóa API 
 
 ---
 
-## Hướng dẫn sử dụng API chi tiết
+## Hướng dẫn sử dụng API chi tiết {#hướng-dẫn-sử-dụng-api-chi-tiết-vi}
 
 Dưới đây là các ví dụ "siêu chi tiết" cho các ngôn ngữ khác nhau.
 
-### Ví dụ JavaScript / Node.js
+### Ví dụ JavaScript / Node.js {#ví-dụ-javascript--nodejs-vi}
 
 Dự án này đi kèm với một tệp `send-test-email.js` ở thư mục gốc để bạn có thể thử nghiệm ngay lập tức.
 
@@ -738,7 +751,7 @@ req.write(data);
 req.end();
 ```
 
-### Ví dụ Python
+### Ví dụ Python {#ví-dụ-python-vi}
 
 Chúng tôi đã tạo một tệp ví dụ `send_email.py` trong thư mục gốc.
 
@@ -860,7 +873,7 @@ if __name__ == "__main__":
         send_email()
 ```
 
-### Ví dụ cURL
+### Ví dụ cURL {#ví-dụ-curl-vi}
 
 Bạn cũng có thể sử dụng `cURL` trực tiếp từ terminal để kiểm tra endpoint. Điều này rất tuyệt vời để kiểm tra nhanh.
 
@@ -881,7 +894,7 @@ curl -X POST http://localhost:9002/api/send-email \
 
 ---
 
-## Cấu trúc dự án
+## Cấu trúc dự án {#cấu-trúc-dự-án-vi}
 
 Dưới đây là tổng quan về cấu trúc thư mục và tệp của dự án:
 
@@ -921,7 +934,7 @@ Dưới đây là tổng quan về cấu trúc thư mục và tệp của dự �
 
 ---
 
-## Triển khai
+## Triển khai {#triển-khai-vi}
 
 Cách dễ nhất để triển khai ứng dụng EmailSenderPro của bạn là sử dụng [Nền tảng Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
 
@@ -932,7 +945,7 @@ Cách dễ nhất để triển khai ứng dụng EmailSenderPro của bạn là
 
 ---
 
-## Câu hỏi thường gặp (FAQ)
+## Câu hỏi thường gặp (FAQ) {#câu-hỏi-thường-gặp-faq-vi}
 
 **1. Tại sao tôi cần sử dụng "Mật khẩu ứng dụng" thay vì mật khẩu Gmail thông thường?**
 *   Đây là một biện pháp bảo mật quan trọng. Mật khẩu ứng dụng là một mật khẩu 16 ký tự dùng một lần, cấp cho ứng dụng quyền truy cập vào tài khoản Google của bạn. Nó an toàn hơn nhiều so với việc lưu trữ mật khẩu chính của bạn trực tiếp trong tệp `.env`, vì bạn có thể thu hồi quyền truy cập của nó bất kỳ lúc nào mà không ảnh hưởng đến mật khẩu chính của bạn.
@@ -945,6 +958,31 @@ Cách dễ nhất để triển khai ứng dụng EmailSenderPro của bạn là
 
 ---
 
-## Giấy phép
+## Giấy phép {#giấy-phép-vi}
 
 Dự án này được cấp phép theo Giấy phép MIT. Xem tệp [LICENSE](LICENSE.md) để biết chi tiết.
+
+---
+<h2 id="spanish">Español (Spanish)</h2>
+
+*(Translation coming soon)*
+
+---
+<h2 id="french">Français (French)</h2>
+
+*(Translation coming soon)*
+
+---
+<h2 id="german">Deutsch (German)</h2>
+
+*(Translation coming soon)*
+
+---
+<h2 id="chinese">简体中文 (Simplified Chinese)</h2>
+
+*(翻译即将推出)*
+
+---
+<h2 id="japanese">日本語 (Japanese)</h2>
+
+*(翻訳は近日公開予定です)*
