@@ -4,6 +4,8 @@ import dbConnect from '@/lib/dbConnect';
 import User, { IUser } from '@/models/User';
 import jwt from 'jsonwebtoken';
 
+export const dynamic = 'force-dynamic';
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 interface JwtPayload {
