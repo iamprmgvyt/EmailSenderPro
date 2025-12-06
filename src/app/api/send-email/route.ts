@@ -3,8 +3,17 @@ import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 
 const DAILY_LIMIT = 10;
+const SENDER_EMAIL = process.env.EMAIL_FROM;
 
 export async function POST(req: Request) {
+  if (!SENDER_EMAIL) {
+    console.error('EMAIL_FROM is not defined in .env');
+    return NextResponse.json(
+      { message: 'Server configuration error: Sender email is not configured.' },
+      { status: 500 }
+    );
+  }
+
   try {
     await dbConnect();
 
@@ -34,7 +43,7 @@ export async function POST(req: Request) {
     }
 
     const finalSubject = subject || user.emailConfig.defaultSubject || 'No Subject';
-    const from = user.emailConfig.fromName ? `${user.emailConfig.fromName} <${user.email}>` : user.email;
+    const from = user.emailConfig.fromName ? `${user.emailConfig.fromName} <${SENDER_EMAIL}>` : SENDER_EMAIL;
 
     // This is where you would integrate with a real email sending service
     // like SendGrid, Mailgun, AWS SES, etc.
