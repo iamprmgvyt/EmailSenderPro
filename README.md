@@ -1421,7 +1421,7 @@ La forma más fácil de desplegar su aplicación EmailSenderPro es usar la [Plat
 ## Preguntas Frecuentes (FAQ)
 
 **1. ¿Por qué necesito usar una "Contraseña de Aplicación" en lugar de mi contraseña habitual de Gmail?**
-*   Esta es una medida de seguridad crucial. Una Contraseña de Aplicación es una contraseña de 16 dígitos de un solo uso que otorga a una aplicación acceso a su cuenta de Google. Es mucho más seguro que almacenar su contraseña principal directamente в el archivo `.env`, ya que puede revocar su acceso en cualquier momento sin afectar su contraseña principal.
+*   Esta es una medida de seguridad crucial. Una Contraseña de Aplicación es una contraseña de 16 dígitos de un solo uso que otorga a una aplicación acceso a su cuenta de Google. Es mucho más seguro que almacenar su contraseña principal directamente en el archivo `.env`, ya que puede revocar su acceso en cualquier momento sin afectar su contraseña principal.
 
 **2. ¿Cuál es el límite diario de envío de correos?**
 *   Por defecto, el límite está establecido en 10 correos por día por usuario. Puede cambiar la constante `DAILY_LIMIT` en `src/app/api/send-email/route.ts` si lo desea.
