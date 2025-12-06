@@ -1,41 +1,41 @@
 /**
  * @file send-test-email.js
- * @description Một tập lệnh Node.js mẫu để gửi email bằng API EmailSenderPro.
+ * @description A sample Node.js script to send an email using the EmailSenderPro API.
  *
- * Cách sử dụng:
- * 1. Đảm bảo rằng ứng dụng EmailSenderPro của bạn đang chạy.
- * 2. Cập nhật biến `API_KEY` bên dưới bằng khóa API từ bảng điều khiển của bạn.
- * 3. Chạy tập lệnh từ terminal: `node send-test-email.js`
+ * How to use:
+ * 1. Make sure your EmailSenderPro application has been deployed (e.g., to Vercel).
+ * 2. Update the `API_KEY` variable below with the API key from your dashboard.
+ * 3. Update the `API_HOSTNAME` if your deployment URL is different.
+ * 4. Run the script from your terminal: `node send-test-email.js`
  */
 
-// Sử dụng thư viện 'http' hoặc 'https' tích hợp sẵn của Node.js để thực hiện yêu cầu HTTP.
-// Chúng ta sẽ dùng http vì đang chạy trên localhost.
-const http = require('http');
+// Use Node.js's built-in 'https' library to make HTTP requests to the deployed app.
+const https = require('https');
 
-// --- Cấu hình ---
-// Thay thế bằng khóa API thực tế từ bảng điều khiển EmailSenderPro của bạn.
+// --- Configuration ---
+// Replace with your actual API key from the EmailSenderPro dashboard.
 const API_KEY = 'YOUR_API_KEY_HERE'; 
 
-// URL của API. Nếu bạn chạy cục bộ trên một cổng khác, hãy thay đổi nó ở đây.
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
+// URL of the deployed API. If you have a custom domain, change it here.
+const API_HOSTNAME = 'emailsenderpro.vercel.app';
+const API_PORT = 443; // Default port for HTTPS
 const API_PATH = '/api/send-email';
 
-// --- Chi tiết Email ---
+// --- Email Details ---
 const emailDetails = {
-  to: 'recipient@example.com', // Địa chỉ email người nhận.
-  subject: 'Xin chào từ Node.js!', // Tiêu đề email.
-  body: '<h1>EmailSenderPro thật tuyệt vời!</h1><p>Email này được gửi bằng một tập lệnh <strong>Node.js</strong>.</p>' // Nội dung email (có thể là HTML).
+  to: 'recipient@example.com', // Recipient's email address.
+  subject: 'Hello from Node.js!', // Email subject.
+  body: '<h1>EmailSenderPro is awesome!</h1><p>This email was sent using a <strong>Node.js</strong> script.</p>' // Email body (can be HTML).
 };
 
-// --- Không chỉnh sửa bên dưới dòng này ---
+// --- Do not edit below this line ---
 
-console.log('Chuẩn bị gửi email...');
+console.log('Preparing to send email to deployed API...');
 
-// Chuyển đổi đối tượng chi tiết email thành chuỗi JSON.
+// Convert the email details object into a JSON string.
 const data = JSON.stringify(emailDetails);
 
-// Định nghĩa các tùy chọn cho yêu cầu HTTP.
+// Define the options for the HTTP request.
 const requestOptions = {
   hostname: API_HOSTNAME,
   port: API_PORT,
@@ -43,47 +43,47 @@ const requestOptions = {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-api-key': API_KEY, // Header xác thực quan trọng!
+    'x-api-key': API_KEY, // The crucial authentication header!
     'Content-Length': Buffer.byteLength(data)
   },
 };
 
-// Tạo yêu cầu.
-const req = http.request(requestOptions, (res) => {
+// Create the request.
+const req = https.request(requestOptions, (res) => {
   let responseBody = '';
 
-  console.log(`Trạng thái phản hồi: ${res.statusCode}`);
+  console.log(`Response Status: ${res.statusCode}`);
   
-  // Lắng nghe dữ liệu phản hồi từ máy chủ.
+  // Listen for response data from the server.
   res.on('data', (chunk) => {
     responseBody += chunk;
   });
 
-  // Khi phản hồi kết thúc.
+  // When the response is complete.
   res.on('end', () => {
     try {
       const parsedResponse = JSON.parse(responseBody);
       if (res.statusCode === 200) {
-        console.log('✅ Email đã được gửi thành công!');
-        console.log('Phản hồi từ máy chủ:', parsedResponse);
+        console.log('✅ Email sent successfully!');
+        console.log('Server Response:', parsedResponse);
       } else {
-        console.error(`❌ Gửi email thất bại. Mã trạng thái: ${res.statusCode}`);
-        console.error('Lỗi từ máy chủ:', parsedResponse);
+        console.error(`❌ Failed to send email. Status Code: ${res.statusCode}`);
+        console.error('Server Error:', parsedResponse);
       }
     } catch (e) {
-      console.error('Không thể phân tích phản hồi JSON:', responseBody);
+      console.error('Could not parse JSON response:', responseBody);
     }
   });
 });
 
-// Xử lý lỗi mạng.
+// Handle network errors.
 req.on('error', (error) => {
-  console.error('Đã xảy ra lỗi với yêu cầu:', error.message);
-  console.error('Vui lòng đảm bảo rằng máy chủ EmailSenderPro đang chạy trên http://localhost:9002');
+  console.error('An error occurred with the request:', error.message);
+  console.error(`Please make sure the EmailSenderPro server is deployed and accessible at https://${API_HOSTNAME}`);
 });
 
-// Gửi dữ liệu body của yêu cầu.
+// Send the request body data.
 req.write(data);
 
-// Kết thúc yêu cầu.
+// Finalize the request.
 req.end();
