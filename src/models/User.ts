@@ -13,6 +13,7 @@ export interface IEmailConfig {
 
 export interface IUser extends Document {
   email: string;
+  username: string;
   password?: string;
   apiKey: string;
   dailySent: IDailySent;
@@ -26,6 +27,13 @@ const UserSchema: Schema<IUser> = new Schema(
       required: [true, 'Please provide an email.'],
       unique: true,
       match: [/.+\@.+\..+/, 'Please fill a valid email address'],
+    },
+    username: {
+      type: String,
+      required: [true, 'Please provide a username.'],
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
     password: {
       type: String,

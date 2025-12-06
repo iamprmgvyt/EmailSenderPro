@@ -7,20 +7,28 @@ export async function POST(req: Request) {
   try {
     await dbConnect();
 
-    const { email, password } = await req.json();
+    const { email, password, username } = await req.json();
 
-    if (!email || !password) {
+    if (!email || !password || !username) {
       return NextResponse.json(
-        { message: 'Email and password are required' },
+        { message: 'Email, username, and password are required' },
         { status: 400 }
       );
     }
     
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if user already exists by email or username
+    const existingUserByEmail = await User.findOne({ email });
+    if (existingUserByEmail) {
         return NextResponse.json(
             { message: 'User with this email already exists' },
+            { status: 409 }
+        );
+    }
+
+    const existingUserByUsername = await User.findOne({ username });
+    if (existingUserByUsername) {
+        return NextResponse.json(
+            { message: 'This username is already taken' },
             { status: 409 }
         );
     }
@@ -31,6 +39,7 @@ export async function POST(req: Request) {
     // Create a new user
     const user = new User({
         email,
+        username,
         password: hashedPassword,
     });
 
