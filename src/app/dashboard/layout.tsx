@@ -28,7 +28,7 @@ export default function DashboardLayout({
                     { 'bg-accent text-accent-foreground': pathname === '/dashboard' }
                   )}
                 >
-                  <Home className="h-5 w-5" />
+                  <Home className="h-4 w-4" />
                   <span className="sr-only">Dashboard</span>
                 </Link>
               </TooltipTrigger>
@@ -43,7 +43,7 @@ export default function DashboardLayout({
                     { 'bg-accent text-accent-foreground': pathname === '/dashboard/edit-email' }
                   )}
                 >
-                  <Settings className="h-5 w-5" />
+                  <Settings className="h-4 w-4" />
                   <span className="sr-only">Email Settings</span>
                 </Link>
               </TooltipTrigger>
