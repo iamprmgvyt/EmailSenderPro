@@ -1,98 +1,98 @@
 # -*- coding: utf-8 -*-
 """
 @file send_email.py
-@description Một tập lệnh Python mẫu để gửi email bằng API EmailSenderPro.
+@description A sample Python script to send an email using the EmailSenderPro API.
 
-Cách sử dụng:
-1. Đảm bảo rằng ứng dụng EmailSenderPro của bạn đang chạy.
-2. Cài đặt thư viện 'requests' nếu bạn chưa có: `pip install requests`.
-3. Cập nhật biến `API_KEY` bên dưới bằng khóa API từ bảng điều khiển của bạn.
-4. Chạy tập lệnh từ terminal: `python send_email.py`
+How to use:
+1. Make sure your EmailSenderPro application is running.
+2. Install the 'requests' library if you haven't already: `pip install requests`.
+3. Update the `API_KEY` variable below with the API key from your dashboard.
+4. Run the script from your terminal: `python send_email.py`
 """
 
 import requests
 import json
 
-# --- Cấu hình ---
+# --- Configuration ---
 
-# Thay thế bằng khóa API thực tế từ bảng điều khiển EmailSenderPro của bạn.
-# Đây là thông tin bí mật, đừng chia sẻ nó công khai.
+# Replace with your actual API key from the EmailSenderPro dashboard.
+# This is a secret, do not share it publicly.
 API_KEY = "YOUR_API_KEY_HERE" 
 
-# URL endpoint của API.
-# Nếu bạn đang chạy ứng dụng trên một tên miền hoặc cổng khác, hãy cập nhật ở đây.
+# The API endpoint URL.
+# If you are running the app on a different domain or port, update it here.
 API_URL = "http://localhost:9002/api/send-email" 
 
-# --- Chi tiết Email ---
+# --- Email Details ---
 
-# Địa chỉ email của người nhận.
+# The recipient's email address.
 recipient_email = "recipient@example.com"
-# Dòng tiêu đề của email.
-email_subject = "Xin chào từ Python!"
-# Nội dung của email. Bạn có thể sử dụng mã HTML để định dạng.
-email_body = "<h1>EmailSenderPro thật tuyệt vời!</h1><p>Email này được gửi bằng một tập lệnh <strong>Python</strong>.</p>"
+# The subject line of the email.
+email_subject = "Hello from Python!"
+# The body of the email. You can use HTML for formatting.
+email_body = "<h1>EmailSenderPro is awesome!</h1><p>This email was sent using a <strong>Python</strong> script.</p>"
 
-# --- Không chỉnh sửa bên dưới dòng này ---
+# --- Do not edit below this line ---
 
 def send_email():
-    """Hàm chính để gửi email."""
+    """The main function to send the email."""
     
-    # Chuẩn bị header cho yêu cầu HTTP.
-    # 'Content-Type' cho máy chủ biết chúng ta đang gửi dữ liệu JSON.
-    # 'x-api-key' là header tùy chỉnh để xác thực.
+    # Prepare the headers for the HTTP request.
+    # 'Content-Type' tells the server we are sending JSON data.
+    # 'x-api-key' is our custom header for authentication.
     headers = {
         "Content-Type": "application/json",
         "x-api-key": API_KEY
     }
 
-    # Chuẩn bị payload (dữ liệu body) cho yêu cầu API.
-    # Nó phải là một từ điển Python, sau đó sẽ được chuyển đổi thành JSON.
+    # Prepare the payload (body data) for the API request.
+    # It must be a Python dictionary, which will then be converted to JSON.
     payload = {
         "to": recipient_email,
         "subject": email_subject,
         "body": email_body
     }
 
-    print("Đang gửi email qua API...")
+    print("Sending email via API...")
 
     try:
-        # Thực hiện yêu cầu POST bằng thư viện requests.
-        # - `url`: Endpoint để gửi yêu cầu đến.
-        # - `headers`: Header HTTP đã chuẩn bị.
-        # - `data`: Dữ liệu payload. `json.dumps` chuyển đổi từ điển Python thành chuỗi JSON.
-        # - `timeout`: Đặt thời gian chờ (tính bằng giây) để tránh tập lệnh bị treo vô thời hạn.
+        # Make the POST request using the requests library.
+        # - `url`: The endpoint to send the request to.
+        # - `headers`: The prepared HTTP headers.
+        # - `data`: The payload data. `json.dumps` converts the Python dict to a JSON string.
+        # - `timeout`: Set a timeout (in seconds) to prevent the script from hanging indefinitely.
         response = requests.post(API_URL, headers=headers, data=json.dumps(payload), timeout=10)
 
-        # Nâng cao một ngoại lệ nếu yêu cầu không thành công (mã trạng thái 4xx hoặc 5xx).
+        # Raise an exception if the request was unsuccessful (4xx or 5xx status codes).
         response.raise_for_status()
 
-        # Nếu chúng ta đến đây, có nghĩa là mã trạng thái là 2xx.
-        print("✅ Email đã được gửi thành công!")
-        print("Phản hồi từ máy chủ:", response.json())
+        # If we get here, it means the status code was 2xx.
+        print("✅ Email sent successfully!")
+        print("Server Response:", response.json())
 
     except requests.exceptions.HTTPError as http_err:
-        # Xử lý các lỗi HTTP cụ thể (ví dụ: 401 Unauthorized, 429 Too Many Requests).
-        print(f"❌ Lỗi HTTP xảy ra: {http_err}")
+        # Handle specific HTTP errors (e.g., 401 Unauthorized, 429 Too Many Requests).
+        print(f"❌ HTTP error occurred: {http_err}")
         try:
-            print("Chi tiết lỗi từ máy chủ:", response.json())
+            print("Error details from server:", response.json())
         except json.JSONDecodeError:
-            print("Không thể phân tích phản hồi lỗi từ máy chủ:", response.text)
+            print("Could not parse error response from server:", response.text)
             
     except requests.exceptions.ConnectionError as conn_err:
-        # Xử lý các sự cố mạng (ví dụ: DNS thất bại, từ chối kết nối).
-        print(f"❌ Lỗi kết nối: Không thể kết nối đến máy chủ tại {API_URL}.")
-        print("Hãy đảm bảo rằng máy chủ EmailSenderPro đang chạy.")
+        # Handle network problems (e.g., DNS failure, refused connection).
+        print(f"❌ Connection error: Could not connect to the server at {API_URL}.")
+        print("Is the EmailSenderPro server running?")
 
     except requests.exceptions.Timeout as timeout_err:
-        # Xử lý nếu yêu cầu hết thời gian chờ.
-        print(f"❌ Lỗi hết thời gian chờ: Yêu cầu mất quá nhiều thời gian để hoàn thành.")
+        # Handle if the request times out.
+        print(f"❌ Timeout error: The request took too long to complete.")
         
     except requests.exceptions.RequestException as e:
-        # Bắt tất cả các ngoại lệ khác từ thư viện requests.
-        print(f"❌ Đã xảy ra lỗi không xác định với yêu cầu: {e}")
+        # Catch any other exceptions from the requests library.
+        print(f"❌ An unknown error occurred with the request: {e}")
 
 if __name__ == "__main__":
     if API_KEY == "YOUR_API_KEY_HERE":
-        print("🔥🔥🔥 Vui lòng cập nhật biến `API_KEY` trong tệp send_email.py bằng khóa API thực tế của bạn! 🔥🔥🔥")
+        print("🔥🔥🔥 Please update the `API_KEY` variable in the send_email.py file with your actual API key! 🔥🔥🔥")
     else:
         send_email()
