@@ -37,7 +37,7 @@ export async function GET() {
       return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
     }
     
-    const user: IUser | null = await User.findById(decoded.id).select('apiKey dailySent');
+    const user: IUser | null = await User.findById(decoded.id).select('apiKey dailySent loginHistory');
 
     if (!user) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
@@ -54,6 +54,7 @@ export async function GET() {
     return NextResponse.json({
         apiKey: user.apiKey,
         dailySent: user.dailySent,
+        loginHistory: user.loginHistory,
     }, { status: 200 });
 
   } catch (error) {

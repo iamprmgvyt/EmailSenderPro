@@ -54,7 +54,7 @@ The application includes user authentication, a dashboard for managing API keys,
 *   🚀 **Email Sending API**: A simple and secure REST API endpoint (`/api/send-email`) to integrate into any application.
 *   ⚙️ **Email Configuration**: Set a default sender name and subject for your emails from the dashboard.
 *   🎨 **Light/Dark Mode**: A modern, beautiful interface with theme-switching capability.
-*   📦 **NPM Package and Examples**: Includes a sample client library (`emailsenderpro`, v0.1.3) and detailed example files for Node.js and Python.
+*   📦 **NPM Package and Examples**: Includes a sample client library (`emailsenderpro`, v0.1.4) and detailed example files for Node.js and Python.
 
 ---
 
@@ -605,7 +605,7 @@ EmailSenderPro là một ứng dụng Next.js full-stack mạnh mẽ, cung cấp
 *   🚀 **API Gửi Email**: Một endpoint REST API đơn giản và an toàn (`/api/send-email`) để tích hợp vào bất kỳ ứng dụng nào.
 *   ⚙️ **Cấu hình Email**: Đặt tên người gửi và tiêu đề mặc định cho email của bạn từ bảng điều khiển.
 *   🎨 **Chế độ Sáng/Tối**: Giao diện hiện đại, đẹp mắt với khả năng chuyển đổi chủ đề.
-*   📦 **Gói NPM và Ví dụ**: Bao gồm một thư viện client mẫu (`emailsenderpro`, v0.1.3) và các tệp ví dụ chi tiết cho Node.js và Python.
+*   📦 **Gói NPM và Ví dụ**: Bao gồm một thư viện client mẫu (`emailsenderpro`, v0.1.4) và các tệp ví dụ chi tiết cho Node.js và Python.
 
 ---
 
@@ -1156,7 +1156,7 @@ La aplicación incluye autenticación de usuarios, un panel de control para gest
 *   🚀 **API de Envío de Correo**: Un endpoint de API REST simple y seguro (`/api/send-email`) para integrar en cualquier aplicación.
 *   ⚙️ **Configuración de Correo**: Establece un nombre de remitente y asunto predeterminados para tus correos desde el panel de control.
 *   🎨 **Modo Claro/Oscuro**: Una interfaz moderna y atractiva con capacidad de cambio de tema.
-*   📦 **Paquete NPM y Ejemplos**: Incluye una biblioteca cliente de muestra (`emailsenderpro`, v0.1.3) y archivos de ejemplo detallados para Node.js y Python.
+*   📦 **Paquete NPM y Ejemplos**: Incluye una biblioteca cliente de muestra (`emailsenderpro`, v0.1.4) y archivos de ejemplo detallados para Node.js y Python.
 
 ---
 
@@ -1664,7 +1664,7 @@ L'application inclut l'authentification des utilisateurs, un tableau de bord pou
 *   🚀 **API d'Envoi d'E-mails**: Un endpoint d'API REST simple et sécurisé (`/api/send-email`) à intégrer dans n'importe quelle application.
 *   ⚙️ **Configuration des E-mails**: Définissez un nom d'expéditeur et un sujet par défaut pour vos e-mails depuis le tableau de bord.
 *   🎨 **Mode Clair/Sombre**: Une interface moderne et esthétique avec une capacité de changement de thème.
-*   📦 **Paquet NPM et Exemples**: Comprend une bibliothèque client d'exemple (`emailsenderpro`, v0.1.3) et des fichiers d'exemples détaillés pour Node.js et Python.
+*   📦 **Paquet NPM et Exemples**: Comprend une bibliothèque client d'exemple (`emailsenderpro`, v0.1.4) et des fichiers d'exemples détaillés pour Node.js et Python.
 
 ---
 
@@ -2172,7 +2172,7 @@ Die Anwendung umfasst Benutzerauthentifizierung, ein Dashboard zur Verwaltung vo
 *   🚀 **E-Mail-Versand-API**: Ein einfacher und sicherer REST-API-Endpunkt (`/api/send-email`) zur Integration in jede Anwendung.
 *   ⚙️ **E-Mail-Konfiguration**: Legen Sie einen Standard-Absendernamen und -Betreff für Ihre E-Mails über das Dashboard fest.
 *   🎨 **Hell-/Dunkelmodus**: Eine moderne, ansprechende Benutzeroberfläche mit der Möglichkeit zum Umschalten des Themas.
-*   📦 **NPM-Paket und Beispiele**: Enthält eine Beispiel-Client-Bibliothek (`emailsenderpro`, v0.1.3) und detaillierte Beispieldateien für Node.js und Python.
+*   📦 **NPM-Paket und Beispiele**: Enthält eine Beispiel-Client-Bibliothek (`emailsenderpro`, v0.1.4) und detaillierte Beispieldateien für Node.js und Python.
 
 ---
 
@@ -2680,7 +2680,7 @@ EmailSenderPro 是一个功能强大的全栈 Next.js 应用程序，提供了�
 *   🚀 **电子邮件发送 API**：一个简单安全的 REST API 端点 (`/api/send-email`)，可集成到任何应用程序中。
 *   ⚙️ **电子邮件配置**：从仪表板为您的电子邮件设置默认发件人名称和主题。
 *   🎨 **浅色/深色模式**：具有主题切换功能的现代化、美观的界面。
-*   📦 **NPM 包和示例**：包括一个示例客户端库（`emailsenderpro`，v0.1.3）以及 Node.js 和 Python 的详细示例文件。
+*   📦 **NPM 包和示例**：包括一个示例客户端库（`emailsenderpro`，v0.1.4）以及 Node.js 和 Python 的详细示例文件。
 
 ---
 
@@ -3188,7 +3188,7 @@ EmailSenderProは、メールを送信するためのシンプルで安全なAPI
 *   🚀 **メール送信API**: 任意のアプリケーションに統合できる、シンプルで安全なREST APIエンドポイント (`/api/send-email`)。
 *   ⚙️ **メール設定**: ダッシュボードからメールのデフォルトの送信者名と件名を設定します。
 *   🎨 **ライト/ダークモード**: テーマ切り替え機能を備えた、モダンで美しいインターフェース。
-*   📦 **NPMパッケージと例**: サンプルクライアントライブラリ（`emailsenderpro`、v0.1.3）と、Node.jsおよびPython用の詳細なサンプルファイルが含まれています。
+*   📦 **NPMパッケージと例**: サンプルクライアントライブラリ（`emailsenderpro`、v0.1.4）と、Node.jsおよびPython用の詳細なサンプルファイルが含まれています。
 
 ---
 

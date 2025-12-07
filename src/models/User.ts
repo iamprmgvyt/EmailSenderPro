@@ -11,6 +11,11 @@ export interface IEmailConfig {
     defaultSubject: string;
 }
 
+export interface ILoginHistory {
+  ip: string;
+  timestamp: Date;
+}
+
 export interface IUser extends Document {
   email: string;
   username: string;
@@ -19,9 +24,15 @@ export interface IUser extends Document {
   dailySent: IDailySent;
   emailConfig: IEmailConfig;
   knownIPs: string[];
+  loginHistory: ILoginHistory[];
   isLocked: boolean;
   lockExpires?: Date;
 }
+
+const LoginHistorySchema: Schema<ILoginHistory> = new Schema({
+  ip: { type: String, required: true },
+  timestamp: { type: Date, required: true, default: Date.now },
+});
 
 const UserSchema: Schema<IUser> = new Schema(
   {
@@ -70,6 +81,10 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     knownIPs: {
       type: [String],
+      default: [],
+    },
+    loginHistory: {
+      type: [LoginHistorySchema],
       default: [],
     },
     isLocked: {

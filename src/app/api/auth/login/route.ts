@@ -8,6 +8,7 @@ import { headers } from 'next/headers';
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 const LOCK_DURATION_DAYS = 15;
+const LOGIN_HISTORY_LIMIT = 5;
 
 export async function POST(req: Request) {
   if (!JWT_SECRET) {
@@ -56,12 +57,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    // IP Check Logic
+    // IP Check and Login History Logic
     const headersList = headers();
     const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
 
     if (ip !== 'unknown') {
-        if (user.knownIPs.length > 0 && !user.knownIPs.includes(ip)) {
+        const isNewIp = !user.knownIPs.includes(ip);
+
+        // Add new login record
+        user.loginHistory.unshift({ ip, timestamp: new Date() });
+        // Keep only the last N records
+        if (user.loginHistory.length > LOGIN_HISTORY_LIMIT) {
+          user.loginHistory.pop();
+        }
+
+        if (user.knownIPs.length > 0 && isNewIp) {
             // New IP detected, lock the account
             user.isLocked = true;
             const lockUntil = new Date();
