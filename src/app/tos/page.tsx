@@ -37,12 +37,14 @@ export default function TermsOfServicePage() {
             EmailSenderPro authorized representative has been notified orally or in writing of the possibility of
             such damage.
           </p>
-          <h3 className="font-bold text-lg text-foreground pt-4">4. Abuse and Fair Use</h3>
+          <h3 className="font-bold text-lg text-foreground pt-4">4. Abuse, Fair Use, and Security</h3>
           <p>
             You agree not to use the service for any illegal or abusive purposes, including but not limited to
             sending spam, unsolicited emails, or malicious content. We reserve the right to terminate your account
             and access to the service without notice if we detect a violation of this policy. The daily sending
-            limit is in place to ensure fair usage for all users.
+            limit is in place to ensure fair usage for all users. Furthermore, to protect account integrity, we reserve
+            the right to temporarily lock any account for a period of up to 15 days if a login from a new, unrecognized
+            IP address is detected. During this period, API access will be disabled.
           </p>
           <h3 className="font-bold text-lg text-foreground pt-4">5. Governing Law</h3>
           <p>

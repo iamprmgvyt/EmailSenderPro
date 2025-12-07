@@ -28,6 +28,13 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ message: 'Invalid API Key.' }, { status: 401 });
     }
+    
+    // Check if the user's account is locked
+    if (user.isLocked && user.lockExpires && user.lockExpires > new Date()) {
+        return NextResponse.json({
+            message: `Your account is currently locked due to suspicious activity. API key is disabled until ${user.lockExpires.toLocaleDateString()}.`
+        }, { status: 403 });
+    }
 
     const today = new Date().toISOString().split('T')[0];
     if (user.dailySent.date !== today) {

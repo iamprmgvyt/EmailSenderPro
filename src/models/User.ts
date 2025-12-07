@@ -18,6 +18,9 @@ export interface IUser extends Document {
   apiKey: string;
   dailySent: IDailySent;
   emailConfig: IEmailConfig;
+  knownIPs: string[];
+  isLocked: boolean;
+  lockExpires?: Date;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
@@ -64,7 +67,18 @@ const UserSchema: Schema<IUser> = new Schema(
             type: String,
             default: '',
         }
-    }
+    },
+    knownIPs: {
+      type: [String],
+      default: [],
+    },
+    isLocked: {
+      type: Boolean,
+      default: false,
+    },
+    lockExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

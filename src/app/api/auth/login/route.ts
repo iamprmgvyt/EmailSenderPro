@@ -3,9 +3,11 @@ import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { headers } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const LOCK_DURATION_DAYS = 15;
 
 export async function POST(req: Request) {
   if (!JWT_SECRET) {
@@ -34,11 +36,50 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
+    // Check if account is currently locked
+    if (user.isLocked && user.lockExpires && user.lockExpires > new Date()) {
+        return NextResponse.json({ 
+            message: `Account is locked due to unusual activity. Please try again after ${user.lockExpires.toLocaleDateString()}.` 
+        }, { status: 403 });
+    }
+
+    // If lock has expired, unlock the account
+    if (user.isLocked && user.lockExpires && user.lockExpires <= new Date()) {
+        user.isLocked = false;
+        user.lockExpires = undefined;
+    }
+
+
     const isPasswordMatch = await bcrypt.compare(password, user.password || '');
 
     if (!isPasswordMatch) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
+
+    // IP Check Logic
+    const headersList = headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+
+    if (ip !== 'unknown') {
+        if (user.knownIPs.length > 0 && !user.knownIPs.includes(ip)) {
+            // New IP detected, lock the account
+            user.isLocked = true;
+            const lockUntil = new Date();
+            lockUntil.setDate(lockUntil.getDate() + LOCK_DURATION_DAYS);
+            user.lockExpires = lockUntil;
+            user.knownIPs.push(ip); // Add new IP to the list
+            await user.save();
+            return NextResponse.json({ 
+                message: `For your security, your account has been locked for ${LOCK_DURATION_DAYS} days due to a login from a new location. Please contact support if you believe this is an error.`
+            }, { status: 403 });
+
+        } else if (user.knownIPs.length === 0) {
+            // First login, add the IP
+            user.knownIPs.push(ip);
+        }
+    }
+    
+    await user.save();
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,

@@ -19,21 +19,22 @@ export default function PrivacyPolicyPage() {
           <p>
             We only ask for personal information when we truly need it to provide a service to you. We collect it by
             fair and lawful means, with your knowledge and consent. We also let you know why we’re collecting it and
-            how it will be used. The only personal information we collect is the email address you use to sign up
-            and your password (which is hashed and cannot be seen by us).
+            how it will be used. The personal information we collect includes your email address, username, and
+            password (which is hashed and cannot be seen by us). We also collect your IP address upon login for security purposes.
           </p>
           <h3 className="font-bold text-lg text-foreground pt-4">2. How We Use Your Information</h3>
           <p>
-            We use your email address to uniquely identify you as a user of our service. We use your email sending
+            We use your email address and username to uniquely identify you as a user of our service. We use your email sending
             data (count and date) solely to enforce daily sending limits. We do not inspect the content of your
-            emails.
+            emails. Your IP address is used to monitor for suspicious activity and protect your account from unauthorized access.
           </p>
-          <h3 className="font-bold text-lg text-foreground pt-4">3. Security</h3>
+          <h3 className="font-bold text-lg text-foreground pt-4">3. Security and Account Locking</h3>
           <p>
             We take the security of your data seriously. We protect your information with commercially acceptable
             means to prevent loss and theft, as well as unauthorized access, disclosure, copying, use or
             modification. Your password is encrypted and stored securely. Your API key is your responsibility to
-            keep secure.
+            keep secure. To protect your account, if we detect a login from a new, unrecognized IP address, we may
+            temporarily lock your account and disable your API key for a period of 15 days.
           </p>
           <h3 className="font-bold text-lg text-foreground pt-4">4. Links to Other Sites</h3>
           <p>
