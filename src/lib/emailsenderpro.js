@@ -67,5 +67,5 @@ function send({ apiKey, to, subject, body }) {
 
 module.exports = {
     send,
-    _version: "0.1.1" 
+    _version: "0.1.2" 
 };
