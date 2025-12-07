@@ -1,6 +1,6 @@
 {
   "name": "emailsenderpro",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A simple client library for sending emails via the EmailSenderPro API.",
   "main": "src/lib/emailsenderpro.js",
@@ -77,8 +77,6 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.15",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"

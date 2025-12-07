@@ -54,7 +54,7 @@ The application includes user authentication, a dashboard for managing API keys,
 *   🚀 **Email Sending API**: A simple and secure REST API endpoint (`/api/send-email`) to integrate into any application.
 *   ⚙️ **Email Configuration**: Set a default sender name and subject for your emails from the dashboard.
 *   🎨 **Light/Dark Mode**: A modern, beautiful interface with theme-switching capability.
-*   📦 **NPM Package and Examples**: Includes a sample client library and detailed example files for Node.js and Python.
+*   📦 **NPM Package and Examples**: Includes a sample client library (`emailsenderpro`, v0.1.1) and detailed example files for Node.js and Python.
 
 ---
 
@@ -197,94 +197,147 @@ This project comes with a `send-test-email.js` file in the root directory so you
 
 ```javascript
 /**
- * @file send-test-email.js
- * @description A sample Node.js script to send an email using the EmailSenderPro API.
+ * @file This script has been converted into a long-running worker.
+ * It periodically sends an email using the EmailSenderPro API.
  *
  * How to use:
- * 1. Make sure your EmailSenderPro application is running.
- * 2. Update the `API_KEY` variable below with the API key from your dashboard.
- * 3. Run the script from your terminal: `node send-test-email.js`
+ * 1. Make sure your EmailSenderPro application has been deployed.
+ * 2. Update `API_KEY` and `API_HOSTNAME` with your actual deployment details.
+ * 3. Configure the `RECIPIENT_EMAIL` and the `SEND_INTERVAL_MINUTES`.
+ * 4. Run the script from your terminal: `node send-test-email.js`
+ *    The script will run indefinitely, sending an email at the specified interval.
  */
 
-// Use Node.js's built-in 'http' or 'https' library to make HTTP requests.
-// We'll use http since we are running on localhost.
-const http = require('http');
+const https = require('https');
 
 // --- Configuration ---
-// Replace with your actual API key from the EmailSenderPro dashboard.
 const API_KEY = 'YOUR_API_KEY_HERE'; 
+const API_HOSTNAME = 'emailsenderpro.vercel.app'; // Your deployed app hostname
+const RECIPIENT_EMAIL = 'recipient@example.com'; // Who to send the email to
+const SEND_INTERVAL_MINUTES = 5; // How often to send an email
 
-// URL of the API. If you run locally on a different port, change it here.
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
-const API_PATH = '/api/send-email';
-
-// --- Email Details ---
-const emailDetails = {
-  to: 'recipient@example.com', // Recipient's email address.
-  subject: 'Hello from Node.js!', // Email subject.
-  body: '<h1>EmailSenderPro is awesome!</h1><p>This email was sent using a <strong>Node.js</strong> script.</p>' // Email body (can be HTML).
-};
+// --- Worker State ---
+let isRateLimited = false;
+let rateLimitPauseHours = 12;
 
 // --- Do not edit below this line ---
 
-console.log('Preparing to send email...');
+const API_PORT = 443; // Default for HTTPS
+const API_PATH = '/api/send-email';
+const SEND_INTERVAL_MS = SEND_INTERVAL_MINUTES * 60 * 1000;
 
-// Convert the email details object into a JSON string.
-const data = JSON.stringify(emailDetails);
 
-// Define the options for the HTTP request.
-const requestOptions = {
-  hostname: API_HOSTNAME,
-  port: API_PORT,
-  path: API_PATH,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY, // The crucial authentication header!
-    'Content-Length': Buffer.byteLength(data)
-  },
-};
+/**
+ * The core function that sends a single email.
+ */
+function sendEmail() {
+  const emailDetails = {
+    to: RECIPIENT_EMAIL,
+    subject: `Automated Test Email - ${new Date().toISOString()}`,
+    body: `
+      <h1>Automated Email Worker</h1>
+      <p>This email was sent automatically by the EmailSenderPro worker script.</p>
+      <p>Timestamp: <strong>${new Date().toUTCString()}</strong></p>
+    `
+  };
 
-// Create the request.
-const req = http.request(requestOptions, (res) => {
-  let responseBody = '';
+  const data = JSON.stringify(emailDetails);
 
-  console.log(`Response Status: ${res.statusCode}`);
-  
-  // Listen for response data from the server.
-  res.on('data', (chunk) => {
-    responseBody += chunk;
-  });
+  const requestOptions = {
+    hostname: API_HOSTNAME,
+    port: API_PORT,
+    path: API_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'Content-Length': Buffer.byteLength(data)
+    },
+  };
 
-  // When the response is complete.
-  res.on('end', () => {
-    try {
-      const parsedResponse = JSON.parse(responseBody);
-      if (res.statusCode === 200) {
-        console.log('✅ Email sent successfully!');
-        console.log('Server Response:', parsedResponse);
-      } else {
-        console.error(`❌ Failed to send email. Status Code: ${res.statusCode}`);
-        console.error('Server Error:', parsedResponse);
+  console.log(`[${new Date().toISOString()}] Attempting to send email to ${RECIPIENT_EMAIL}...`);
+
+  const req = https.request(requestOptions, (res) => {
+    let responseBody = '';
+    res.on('data', (chunk) => {
+      responseBody += chunk;
+    });
+
+    res.on('end', () => {
+      try {
+        const parsedResponse = JSON.parse(responseBody);
+        
+        if (res.statusCode === 200) {
+          console.log(`[${new Date().toISOString()}] ✅ Success! Email sent. Response:`, parsedResponse.message);
+          isRateLimited = false; // Reset rate limit flag on success
+        
+        } else if (res.statusCode === 429) {
+          console.warn(`[${new Date().toISOString()}] ⏸️ Daily limit reached. Pausing for ${rateLimitPauseHours} hours.`);
+          isRateLimited = true; // Set rate limit flag
+        
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ Failed to send email. Status: ${res.statusCode}`);
+          console.error('Server Error:', parsedResponse.message || 'No message provided.');
+        }
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}] Error parsing JSON response:`, responseBody);
       }
-    } catch (e) {
-      console.error('Could not parse JSON response:', responseBody);
-    }
+    });
   });
-});
 
-// Handle network errors.
-req.on('error', (error) => {
-  console.error('An error occurred with the request:', error.message);
-  console.error('Please make sure the EmailSenderPro server is running on http://localhost:9002');
-});
+  req.on('error', (error) => {
+    console.error(`[${new Date().toISOString()}] ❌ Request error:`, error.message);
+  });
 
-// Send the request body data.
-req.write(data);
+  req.write(data);
+  req.end();
+}
 
-// Finalize the request.
-req.end();
+/**
+ * The main job runner. Decides whether to send an email based on the rate limit status.
+ */
+function emailJob() {
+  if (isRateLimited) {
+    console.log(`[${new Date().toISOString()}] Currently rate-limited. Skipping this cycle.`);
+    return;
+  }
+  sendEmail();
+}
+
+/**
+ * The entry point for the worker.
+ */
+function main() {
+  if (API_KEY === 'YOUR_API_KEY_HERE') {
+    console.error("🔥🔥🔥 Please update the `API_KEY` variable in the script before running! 🔥🔥🔥");
+    return; // Stop execution if API key is not set
+  }
+
+  console.log("======================================");
+  console.log("  EmailSenderPro Worker Initialized   ");
+  console.log("======================================");
+  console.log(`Host: https://${API_HOSTNAME}`);
+  console.log(`Interval: ${SEND_INTERVAL_MINUTES} minutes`);
+  console.log("Press Ctrl+C to stop the worker.");
+  console.log("--------------------------------------");
+
+  // Run the job immediately on start
+  emailJob();
+
+  // Then run it on the specified interval
+  setInterval(emailJob, SEND_INTERVAL_MS);
+
+  // A special interval to reset the rate-limit flag, allowing the worker to try again later.
+  setInterval(() => {
+    if (isRateLimited) {
+      console.log(`[${new Date().toISOString()}] Resetting rate-limit flag to try again on the next cycle.`);
+      isRateLimited = false;
+    }
+  }, rateLimitPauseHours * 60 * 60 * 1000);
+}
+
+// Start the worker
+main();
 ```
 
 <a name="python-example-en"></a>
@@ -552,7 +605,7 @@ EmailSenderPro là một ứng dụng Next.js full-stack mạnh mẽ, cung cấp
 *   🚀 **API Gửi Email**: Một endpoint REST API đơn giản và an toàn (`/api/send-email`) để tích hợp vào bất kỳ ứng dụng nào.
 *   ⚙️ **Cấu hình Email**: Đặt tên người gửi và tiêu đề mặc định cho email của bạn từ bảng điều khiển.
 *   🎨 **Chế độ Sáng/Tối**: Giao diện hiện đại, đẹp mắt với khả năng chuyển đổi chủ đề.
-*   📦 **Gói NPM và Ví dụ**: Bao gồm một thư viện client mẫu và các tệp ví dụ chi tiết cho Node.js và Python.
+*   📦 **Gói NPM và Ví dụ**: Bao gồm một thư viện client mẫu (`emailsenderpro`, v0.1.1) và các tệp ví dụ chi tiết cho Node.js và Python.
 
 ---
 
@@ -695,94 +748,147 @@ Dự án này đi kèm với một tệp `send-test-email.js` ở thư mục g�
 
 ```javascript
 /**
- * @file send-test-email.js
- * @description Một tập lệnh Node.js mẫu để gửi email bằng API EmailSenderPro.
+ * @file This script has been converted into a long-running worker.
+ * It periodically sends an email using the EmailSenderPro API.
  *
- * Cách sử dụng:
- * 1. Đảm bảo rằng ứng dụng EmailSenderPro của bạn đang chạy.
- * 2. Cập nhật biến `API_KEY` bên dưới bằng khóa API từ bảng điều khiển của bạn.
- * 3. Chạy tập lệnh từ terminal: `node send-test-email.js`
+ * How to use:
+ * 1. Make sure your EmailSenderPro application has been deployed.
+ * 2. Update `API_KEY` and `API_HOSTNAME` with your actual deployment details.
+ * 3. Configure the `RECIPIENT_EMAIL` and the `SEND_INTERVAL_MINUTES`.
+ * 4. Run the script from your terminal: `node send-test-email.js`
+ *    The script will run indefinitely, sending an email at the specified interval.
  */
 
-// Sử dụng thư viện 'http' hoặc 'https' tích hợp sẵn của Node.js để thực hiện yêu cầu HTTP.
-// Chúng ta sẽ dùng http vì đang chạy trên localhost.
-const http = require('http');
+const https = require('https');
 
-// --- Cấu hình ---
-// Thay thế bằng khóa API thực tế từ bảng điều khiển EmailSenderPro của bạn.
+// --- Configuration ---
 const API_KEY = 'YOUR_API_KEY_HERE'; 
+const API_HOSTNAME = 'emailsenderpro.vercel.app'; // Your deployed app hostname
+const RECIPIENT_EMAIL = 'recipient@example.com'; // Who to send the email to
+const SEND_INTERVAL_MINUTES = 5; // How often to send an email
 
-// URL của API. Nếu bạn chạy cục bộ trên một cổng khác, hãy thay đổi nó ở đây.
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
+// --- Worker State ---
+let isRateLimited = false;
+let rateLimitPauseHours = 12;
+
+// --- Do not edit below this line ---
+
+const API_PORT = 443; // Default for HTTPS
 const API_PATH = '/api/send-email';
+const SEND_INTERVAL_MS = SEND_INTERVAL_MINUTES * 60 * 1000;
 
-// --- Chi tiết Email ---
-const emailDetails = {
-  to: 'recipient@example.com', // Địa chỉ email người nhận.
-  subject: 'Xin chào từ Node.js!', // Tiêu đề email.
-  body: '<h1>EmailSenderPro thật tuyệt vời!</h1><p>Email này được gửi bằng một tập lệnh <strong>Node.js</strong>.</p>' // Nội dung email (có thể là HTML).
-};
 
-// --- Không chỉnh sửa bên dưới dòng này ---
+/**
+ * The core function that sends a single email.
+ */
+function sendEmail() {
+  const emailDetails = {
+    to: RECIPIENT_EMAIL,
+    subject: `Automated Test Email - ${new Date().toISOString()}`,
+    body: `
+      <h1>Automated Email Worker</h1>
+      <p>This email was sent automatically by the EmailSenderPro worker script.</p>
+      <p>Timestamp: <strong>${new Date().toUTCString()}</strong></p>
+    `
+  };
 
-console.log('Chuẩn bị gửi email...');
+  const data = JSON.stringify(emailDetails);
 
-// Chuyển đổi đối tượng chi tiết email thành chuỗi JSON.
-const data = JSON.stringify(emailDetails);
+  const requestOptions = {
+    hostname: API_HOSTNAME,
+    port: API_PORT,
+    path: API_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'Content-Length': Buffer.byteLength(data)
+    },
+  };
 
-// Định nghĩa các tùy chọn cho yêu cầu HTTP.
-const requestOptions = {
-  hostname: API_HOSTNAME,
-  port: API_PORT,
-  path: API_PATH,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY, // Header xác thực quan trọng!
-    'Content-Length': Buffer.byteLength(data)
-  },
-};
+  console.log(`[${new Date().toISOString()}] Attempting to send email to ${RECIPIENT_EMAIL}...`);
 
-// Tạo yêu cầu.
-const req = http.request(requestOptions, (res) => {
-  let responseBody = '';
+  const req = https.request(requestOptions, (res) => {
+    let responseBody = '';
+    res.on('data', (chunk) => {
+      responseBody += chunk;
+    });
 
-  console.log(`Trạng thái phản hồi: ${res.statusCode}`);
-  
-  // Lắng nghe dữ liệu phản hồi từ máy chủ.
-  res.on('data', (chunk) => {
-    responseBody += chunk;
-  });
-
-  // Khi phản hồi kết thúc.
-  res.on('end', () => {
-    try {
-      const parsedResponse = JSON.parse(responseBody);
-      if (res.statusCode === 200) {
-        console.log('✅ Email đã được gửi thành công!');
-        console.log('Phản hồi từ máy chủ:', parsedResponse);
-      } else {
-        console.error(`❌ Gửi email thất bại. Mã trạng thái: ${res.statusCode}`);
-        console.error('Lỗi từ máy chủ:', parsedResponse);
+    res.on('end', () => {
+      try {
+        const parsedResponse = JSON.parse(responseBody);
+        
+        if (res.statusCode === 200) {
+          console.log(`[${new Date().toISOString()}] ✅ Success! Email sent. Response:`, parsedResponse.message);
+          isRateLimited = false; // Reset rate limit flag on success
+        
+        } else if (res.statusCode === 429) {
+          console.warn(`[${new Date().toISOString()}] ⏸️ Daily limit reached. Pausing for ${rateLimitPauseHours} hours.`);
+          isRateLimited = true; // Set rate limit flag
+        
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ Failed to send email. Status: ${res.statusCode}`);
+          console.error('Server Error:', parsedResponse.message || 'No message provided.');
+        }
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}] Error parsing JSON response:`, responseBody);
       }
-    } catch (e) {
-      console.error('Không thể phân tích phản hồi JSON:', responseBody);
-    }
+    });
   });
-});
 
-// Xử lý lỗi mạng.
-req.on('error', (error) => {
-  console.error('Đã xảy ra lỗi với yêu cầu:', error.message);
-  console.error('Vui lòng đảm bảo rằng máy chủ EmailSenderPro đang chạy trên http://localhost:9002');
-});
+  req.on('error', (error) => {
+    console.error(`[${new Date().toISOString()}] ❌ Request error:`, error.message);
+  });
 
-// Gửi dữ liệu body của yêu cầu.
-req.write(data);
+  req.write(data);
+  req.end();
+}
 
-// Kết thúc yêu cầu.
-req.end();
+/**
+ * The main job runner. Decides whether to send an email based on the rate limit status.
+ */
+function emailJob() {
+  if (isRateLimited) {
+    console.log(`[${new Date().toISOString()}] Currently rate-limited. Skipping this cycle.`);
+    return;
+  }
+  sendEmail();
+}
+
+/**
+ * The entry point for the worker.
+ */
+function main() {
+  if (API_KEY === 'YOUR_API_KEY_HERE') {
+    console.error("🔥🔥🔥 Please update the `API_KEY` variable in the script before running! 🔥🔥🔥");
+    return; // Stop execution if API key is not set
+  }
+
+  console.log("======================================");
+  console.log("  EmailSenderPro Worker Initialized   ");
+  console.log("======================================");
+  console.log(`Host: https://${API_HOSTNAME}`);
+  console.log(`Interval: ${SEND_INTERVAL_MINUTES} minutes`);
+  console.log("Press Ctrl+C to stop the worker.");
+  console.log("--------------------------------------");
+
+  // Run the job immediately on start
+  emailJob();
+
+  // Then run it on the specified interval
+  setInterval(emailJob, SEND_INTERVAL_MS);
+
+  // A special interval to reset the rate-limit flag, allowing the worker to try again later.
+  setInterval(() => {
+    if (isRateLimited) {
+      console.log(`[${new Date().toISOString()}] Resetting rate-limit flag to try again on the next cycle.`);
+      isRateLimited = false;
+    }
+  }, rateLimitPauseHours * 60 * 60 * 1000);
+}
+
+// Start the worker
+main();
 ```
 
 <a name="ví-dụ-python-vi"></a>
@@ -1050,7 +1156,7 @@ La aplicación incluye autenticación de usuarios, un panel de control para gest
 *   🚀 **API de Envío de Correo**: Un endpoint de API REST simple y seguro (`/api/send-email`) para integrar en cualquier aplicación.
 *   ⚙️ **Configuración de Correo**: Establece un nombre de remitente y asunto predeterminados para tus correos desde el panel de control.
 *   🎨 **Modo Claro/Oscuro**: Una interfaz moderna y atractiva con capacidad de cambio de tema.
-*   📦 **Paquete NPM y Ejemplos**: Incluye una biblioteca cliente de muestra y archivos de ejemplo detallados para Node.js y Python.
+*   📦 **Paquete NPM y Ejemplos**: Incluye una biblioteca cliente de muestra (`emailsenderpro`, v0.1.1) y archivos de ejemplo detallados para Node.js y Python.
 
 ---
 
@@ -1193,73 +1299,147 @@ Este proyecto viene con un archivo `send-test-email.js` en el directorio raíz p
 
 ```javascript
 /**
- * @file send-test-email.js
- * @description Un script de Node.js de muestra para enviar un correo usando la API de EmailSenderPro.
+ * @file This script has been converted into a long-running worker.
+ * It periodically sends an email using the EmailSenderPro API.
  *
- * Cómo usarlo:
- * 1. Asegúrese de que su aplicación EmailSenderPro esté en funcionamiento.
- * 2. Actualice la variable `API_KEY` a continuación con la clave de API de su panel de control.
- * 3. Ejecute el script desde su terminal: `node send-test-email.js`
+ * How to use:
+ * 1. Make sure your EmailSenderPro application has been deployed.
+ * 2. Update `API_KEY` and `API_HOSTNAME` with your actual deployment details.
+ * 3. Configure the `RECIPIENT_EMAIL` and the `SEND_INTERVAL_MINUTES`.
+ * 4. Run the script from your terminal: `node send-test-email.js`
+ *    The script will run indefinitely, sending an email at the specified interval.
  */
-const http = require('http');
 
-// --- Configuración ---
-const API_KEY = 'SU_CLAVE_DE_API_AQUÍ';
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
+const https = require('https');
+
+// --- Configuration ---
+const API_KEY = 'SU_CLAVE_DE_API_AQUÍ'; 
+const API_HOSTNAME = 'emailsenderpro.vercel.app'; // Your deployed app hostname
+const RECIPIENT_EMAIL = 'destinatario@example.com'; // Who to send the email to
+const SEND_INTERVAL_MINUTES = 5; // How often to send an email
+
+// --- Worker State ---
+let isRateLimited = false;
+let rateLimitPauseHours = 12;
+
+// --- Do not edit below this line ---
+
+const API_PORT = 443; // Default for HTTPS
 const API_PATH = '/api/send-email';
+const SEND_INTERVAL_MS = SEND_INTERVAL_MINUTES * 60 * 1000;
 
-// --- Detalles del Correo ---
-const emailDetails = {
-  to: 'destinatario@example.com',
-  subject: '¡Hola desde Node.js!',
-  body: '<h1>¡EmailSenderPro es increíble!</h1><p>Este correo fue enviado usando un script de <strong>Node.js</strong>.</p>'
-};
 
-// --- No editar debajo de esta línea ---
-console.log('Preparando para enviar correo...');
-const data = JSON.stringify(emailDetails);
-const requestOptions = {
-  hostname: API_HOSTNAME,
-  port: API_PORT,
-  path: API_PATH,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY,
-    'Content-Length': Buffer.byteLength(data)
-  },
-};
+/**
+ * The core function that sends a single email.
+ */
+function sendEmail() {
+  const emailDetails = {
+    to: RECIPIENT_EMAIL,
+    subject: `Correo de prueba automatizado - ${new Date().toISOString()}`,
+    body: `
+      <h1>Trabajador de correo automatizado</h1>
+      <p>Este correo fue enviado automáticamente por el script del trabajador de EmailSenderPro.</p>
+      <p>Marca de tiempo: <strong>${new Date().toUTCString()}</strong></p>
+    `
+  };
 
-const req = http.request(requestOptions, (res) => {
-  let responseBody = '';
-  console.log(`Estado de la Respuesta: ${res.statusCode}`);
-  res.on('data', (chunk) => {
-    responseBody += chunk;
-  });
-  res.on('end', () => {
-    try {
-      const parsedResponse = JSON.parse(responseBody);
-      if (res.statusCode === 200) {
-        console.log('✅ ¡Correo enviado exitosamente!');
-        console.log('Respuesta del Servidor:', parsedResponse);
-      } else {
-        console.error(`❌ Fallo al enviar el correo. Código de Estado: ${res.statusCode}`);
-        console.error('Error del Servidor:', parsedResponse);
+  const data = JSON.stringify(emailDetails);
+
+  const requestOptions = {
+    hostname: API_HOSTNAME,
+    port: API_PORT,
+    path: API_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'Content-Length': Buffer.byteLength(data)
+    },
+  };
+
+  console.log(`[${new Date().toISOString()}] Intentando enviar correo a ${RECIPIENT_EMAIL}...`);
+
+  const req = https.request(requestOptions, (res) => {
+    let responseBody = '';
+    res.on('data', (chunk) => {
+      responseBody += chunk;
+    });
+
+    res.on('end', () => {
+      try {
+        const parsedResponse = JSON.parse(responseBody);
+        
+        if (res.statusCode === 200) {
+          console.log(`[${new Date().toISOString()}] ✅ ¡Éxito! Correo enviado. Respuesta:`, parsedResponse.message);
+          isRateLimited = false; // Reset rate limit flag on success
+        
+        } else if (res.statusCode === 429) {
+          console.warn(`[${new Date().toISOString()}] ⏸️ Límite diario alcanzado. Pausando por ${rateLimitPauseHours} horas.`);
+          isRateLimited = true; // Set rate limit flag
+        
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ Fallo al enviar el correo. Estado: ${res.statusCode}`);
+          console.error('Error del Servidor:', parsedResponse.message || 'No se proporcionó mensaje.');
+        }
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}] Error al analizar la respuesta JSON:`, responseBody);
       }
-    } catch (e) {
-      console.error('No se pudo analizar la respuesta JSON:', responseBody);
-    }
+    });
   });
-});
 
-req.on('error', (error) => {
-  console.error('Ocurrió un error con la solicitud:', error.message);
-  console.error('Por favor, asegúrese de que el servidor EmailSenderPro esté funcionando en http://localhost:9002');
-});
+  req.on('error', (error) => {
+    console.error(`[${new Date().toISOString()}] ❌ Error en la solicitud:`, error.message);
+  });
 
-req.write(data);
-req.end();
+  req.write(data);
+  req.end();
+}
+
+/**
+ * The main job runner. Decides whether to send an email based on the rate limit status.
+ */
+function emailJob() {
+  if (isRateLimited) {
+    console.log(`[${new Date().toISOString()}] Actualmente con límite de tasa. Saltando este ciclo.`);
+    return;
+  }
+  sendEmail();
+}
+
+/**
+ * The entry point for the worker.
+ */
+function main() {
+  if (API_KEY === 'SU_CLAVE_DE_API_AQUÍ') {
+    console.error("🔥🔥🔥 ¡Por favor, actualice la variable `API_KEY` en el script antes de ejecutarlo! 🔥🔥🔥");
+    return; // Stop execution if API key is not set
+  }
+
+  console.log("======================================");
+  console.log("  Trabajador de EmailSenderPro iniciado   ");
+  console.log("======================================");
+  console.log(`Host: https://${API_HOSTNAME}`);
+  console.log(`Intervalo: ${SEND_INTERVAL_MINUTES} minutos`);
+  console.log("Presione Ctrl+C para detener el trabajador.");
+  console.log("--------------------------------------");
+
+  // Run the job immediately on start
+  emailJob();
+
+  // Then run it on the specified interval
+  setInterval(emailJob, SEND_INTERVAL_MS);
+
+  // A special interval to reset the rate-limit flag, allowing the worker to try again later.
+  setInterval(() => {
+    if (isRateLimited) {
+      console.log(`[${new Date().toISOString()}] Restableciendo la bandera de límite de tasa para intentar de nuevo en el próximo ciclo.`);
+      isRateLimited = false;
+    }
+  }, rateLimitPauseHours * 60 * 60 * 1000);
+}
+
+// Start the worker
+main();
 ```
 
 <a name="ejemplo-en-python-es"></a>
@@ -1484,7 +1664,7 @@ L'application inclut l'authentification des utilisateurs, un tableau de bord pou
 *   🚀 **API d'Envoi d'E-mails**: Un endpoint d'API REST simple et sécurisé (`/api/send-email`) à intégrer dans n'importe quelle application.
 *   ⚙️ **Configuration des E-mails**: Définissez un nom d'expéditeur et un sujet par défaut pour vos e-mails depuis le tableau de bord.
 *   🎨 **Mode Clair/Sombre**: Une interface moderne et esthétique avec une capacité de changement de thème.
-*   📦 **Paquet NPM et Exemples**: Comprend une bibliothèque client d'exemple et des fichiers d'exemples détaillés pour Node.js et Python.
+*   📦 **Paquet NPM et Exemples**: Comprend une bibliothèque client d'exemple (`emailsenderpro`, v0.1.1) et des fichiers d'exemples détaillés pour Node.js et Python.
 
 ---
 
@@ -1627,73 +1807,147 @@ Ce projet est livré avec un fichier `send-test-email.js` à la racine pour que 
 
 ```javascript
 /**
- * @file send-test-email.js
- * @description Un script Node.js d'exemple pour envoyer un e-mail via l'API EmailSenderPro.
+ * @file This script has been converted into a long-running worker.
+ * It periodically sends an email using the EmailSenderPro API.
  *
- * Comment l'utiliser :
- * 1. Assurez-vous que votre application EmailSenderPro est en cours d'exécution.
- * 2. Mettez à jour la variable `API_KEY` ci-dessous avec la clé API de votre tableau de bord.
- * 3. Exécutez le script depuis votre terminal : `node send-test-email.js`
+ * How to use:
+ * 1. Make sure your EmailSenderPro application has been deployed.
+ * 2. Update `API_KEY` and `API_HOSTNAME` with your actual deployment details.
+ * 3. Configure the `RECIPIENT_EMAIL` and the `SEND_INTERVAL_MINUTES`.
+ * 4. Run the script from your terminal: `node send-test-email.js`
+ *    The script will run indefinitely, sending an email at the specified interval.
  */
-const http = require('http');
+
+const https = require('https');
 
 // --- Configuration ---
-const API_KEY = 'VOTRE_CLÉ_API_ICI';
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
+const API_KEY = 'VOTRE_CLÉ_API_ICI'; 
+const API_HOSTNAME = 'emailsenderpro.vercel.app'; // Your deployed app hostname
+const RECIPIENT_EMAIL = 'destinataire@example.com'; // Who to send the email to
+const SEND_INTERVAL_MINUTES = 5; // How often to send an email
+
+// --- Worker State ---
+let isRateLimited = false;
+let rateLimitPauseHours = 12;
+
+// --- Do not edit below this line ---
+
+const API_PORT = 443; // Default for HTTPS
 const API_PATH = '/api/send-email';
+const SEND_INTERVAL_MS = SEND_INTERVAL_MINUTES * 60 * 1000;
 
-// --- Détails de l'E-mail ---
-const emailDetails = {
-  to: 'destinataire@example.com',
-  subject: 'Bonjour depuis Node.js !',
-  body: '<h1>EmailSenderPro est génial !</h1><p>Cet e-mail a été envoyé à l\'aide d\'un script <strong>Node.js</strong>.</p>'
-};
 
-// --- Ne pas modifier en dessous de cette ligne ---
-console.log('Préparation de l\'envoi de l\'e-mail...');
-const data = JSON.stringify(emailDetails);
-const requestOptions = {
-  hostname: API_HOSTNAME,
-  port: API_PORT,
-  path: API_PATH,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY,
-    'Content-Length': Buffer.byteLength(data)
-  },
-};
+/**
+ * The core function that sends a single email.
+ */
+function sendEmail() {
+  const emailDetails = {
+    to: RECIPIENT_EMAIL,
+    subject: `E-mail de test automatisé - ${new Date().toISOString()}`,
+    body: `
+      <h1>Travailleur d'e-mail automatisé</h1>
+      <p>Cet e-mail a été envoyé automatiquement par le script du travailleur EmailSenderPro.</p>
+      <p>Horodatage: <strong>${new Date().toUTCString()}</strong></p>
+    `
+  };
 
-const req = http.request(requestOptions, (res) => {
-  let responseBody = '';
-  console.log(`Statut de la réponse : ${res.statusCode}`);
-  res.on('data', (chunk) => {
-    responseBody += chunk;
-  });
-  res.on('end', () => {
-    try {
-      const parsedResponse = JSON.parse(responseBody);
-      if (res.statusCode === 200) {
-        console.log('✅ E-mail envoyé avec succès !');
-        console.log('Réponse du serveur :', parsedResponse);
-      } else {
-        console.error(`❌ Échec de l'envoi de l'e-mail. Code de statut : ${res.statusCode}`);
-        console.error('Erreur du serveur :', parsedResponse);
+  const data = JSON.stringify(emailDetails);
+
+  const requestOptions = {
+    hostname: API_HOSTNAME,
+    port: API_PORT,
+    path: API_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'Content-Length': Buffer.byteLength(data)
+    },
+  };
+
+  console.log(`[${new Date().toISOString()}] Tentative d'envoi d'e-mail à ${RECIPIENT_EMAIL}...`);
+
+  const req = https.request(requestOptions, (res) => {
+    let responseBody = '';
+    res.on('data', (chunk) => {
+      responseBody += chunk;
+    });
+
+    res.on('end', () => {
+      try {
+        const parsedResponse = JSON.parse(responseBody);
+        
+        if (res.statusCode === 200) {
+          console.log(`[${new Date().toISOString()}] ✅ Succès ! E-mail envoyé. Réponse :`, parsedResponse.message);
+          isRateLimited = false; // Reset rate limit flag on success
+        
+        } else if (res.statusCode === 429) {
+          console.warn(`[${new Date().toISOString()}] ⏸️ Limite quotidienne atteinte. Mise en pause pour ${rateLimitPauseHours} heures.`);
+          isRateLimited = true; // Set rate limit flag
+        
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ Échec de l'envoi de l'e-mail. Statut : ${res.statusCode}`);
+          console.error('Erreur du serveur :', parsedResponse.message || 'Aucun message fourni.');
+        }
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}] Erreur lors de l'analyse de la réponse JSON :`, responseBody);
       }
-    } catch (e) {
-      console.error('Impossible de parser la réponse JSON :', responseBody);
-    }
+    });
   });
-});
 
-req.on('error', (error) => {
-  console.error('Une erreur est survenue avec la requête :', error.message);
-  console.error('Veuillez vous assurer que le serveur EmailSenderPro est en cours d\'exécution sur http://localhost:9002');
-});
+  req.on('error', (error) => {
+    console.error(`[${new Date().toISOString()}] ❌ Erreur de requête :`, error.message);
+  });
 
-req.write(data);
-req.end();
+  req.write(data);
+  req.end();
+}
+
+/**
+ * The main job runner. Decides whether to send an email based on the rate limit status.
+ */
+function emailJob() {
+  if (isRateLimited) {
+    console.log(`[${new Date().toISOString()}] Actuellement limité. Sautant ce cycle.`);
+    return;
+  }
+  sendEmail();
+}
+
+/**
+ * The entry point for the worker.
+ */
+function main() {
+  if (API_KEY === 'VOTRE_CLÉ_API_ICI') {
+    console.error("🔥🔥🔥 Veuillez mettre à jour la variable `API_KEY` dans le script avant de l'exécuter ! 🔥🔥🔥");
+    return; // Stop execution if API key is not set
+  }
+
+  console.log("======================================");
+  console.log("  Travailleur EmailSenderPro initialisé   ");
+  console.log("======================================");
+  console.log(`Hôte: https://${API_HOSTNAME}`);
+  console.log(`Intervalle: ${SEND_INTERVAL_MINUTES} minutes`);
+  console.log("Appuyez sur Ctrl+C pour arrêter le travailleur.");
+  console.log("--------------------------------------");
+
+  // Run the job immediately on start
+  emailJob();
+
+  // Then run it on the specified interval
+  setInterval(emailJob, SEND_INTERVAL_MS);
+
+  // A special interval to reset the rate-limit flag, allowing the worker to try again later.
+  setInterval(() => {
+    if (isRateLimited) {
+      console.log(`[${new Date().toISOString()}] Réinitialisation du drapeau de limitation de débit pour réessayer au prochain cycle.`);
+      isRateLimited = false;
+    }
+  }, rateLimitPauseHours * 60 * 60 * 1000);
+}
+
+// Start the worker
+main();
 ```
 
 <a name="exemple-python-fr"></a>
@@ -1918,7 +2172,7 @@ Die Anwendung umfasst Benutzerauthentifizierung, ein Dashboard zur Verwaltung vo
 *   🚀 **E-Mail-Versand-API**: Ein einfacher und sicherer REST-API-Endpunkt (`/api/send-email`) zur Integration in jede Anwendung.
 *   ⚙️ **E-Mail-Konfiguration**: Legen Sie einen Standard-Absendernamen und -Betreff für Ihre E-Mails über das Dashboard fest.
 *   🎨 **Hell-/Dunkelmodus**: Eine moderne, ansprechende Benutzeroberfläche mit der Möglichkeit zum Umschalten des Themas.
-*   📦 **NPM-Paket und Beispiele**: Enthält eine Beispiel-Client-Bibliothek und detaillierte Beispieldateien für Node.js und Python.
+*   📦 **NPM-Paket und Beispiele**: Enthält eine Beispiel-Client-Bibliothek (`emailsenderpro`, v0.1.1) und detaillierte Beispieldateien für Node.js und Python.
 
 ---
 
@@ -2061,73 +2315,147 @@ Dieses Projekt wird mit einer `send-test-email.js`-Datei im Stammverzeichnis gel
 
 ```javascript
 /**
- * @file send-test-email.js
- * @description Ein Beispiel-Node.js-Skript zum Senden einer E-Mail über die EmailSenderPro-API.
+ * @file This script has been converted into a long-running worker.
+ * It periodically sends an email using the EmailSenderPro API.
  *
- * Anwendung:
- * 1. Stellen Sie sicher, dass Ihre EmailSenderPro-Anwendung läuft.
- * 2. Aktualisieren Sie die Variable `API_KEY` unten mit dem API-Schlüssel aus Ihrem Dashboard.
- * 3. Führen Sie das Skript von Ihrem Terminal aus: `node send-test-email.js`
+ * How to use:
+ * 1. Make sure your EmailSenderPro application has been deployed.
+ * 2. Update `API_KEY` and `API_HOSTNAME` with your actual deployment details.
+ * 3. Configure the `RECIPIENT_EMAIL` and the `SEND_INTERVAL_MINUTES`.
+ * 4. Run the script from your terminal: `node send-test-email.js`
+ *    The script will run indefinitely, sending an email at the specified interval.
  */
-const http = require('http');
+
+const https = require('https');
 
 // --- Konfiguration ---
-const API_KEY = 'IHR_API_SCHLÜSSEL_HIER';
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
-const API_PATH = '/api/send-email';
+const API_KEY = 'IHR_API_SCHLÜSSEL_HIER'; 
+const API_HOSTNAME = 'emailsenderpro.vercel.app'; // Hostname Ihrer bereitgestellten App
+const RECIPIENT_EMAIL = 'empfaenger@example.com'; // An wen die E-Mail gesendet werden soll
+const SEND_INTERVAL_MINUTES = 5; // Wie oft eine E-Mail gesendet werden soll
 
-// --- E-Mail-Details ---
-const emailDetails = {
-  to: 'empfaenger@example.com',
-  subject: 'Hallo von Node.js!',
-  body: '<h1>EmailSenderPro ist großartig!</h1><p>Diese E-Mail wurde mit einem <strong>Node.js</strong>-Skript gesendet.</p>'
-};
+// --- Worker-Zustand ---
+let isRateLimited = false;
+let rateLimitPauseHours = 12;
 
 // --- Bearbeiten Sie nichts unterhalb dieser Zeile ---
-console.log('E-Mail-Versand wird vorbereitet...');
-const data = JSON.stringify(emailDetails);
-const requestOptions = {
-  hostname: API_HOSTNAME,
-  port: API_PORT,
-  path: API_PATH,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY,
-    'Content-Length': Buffer.byteLength(data)
-  },
-};
 
-const req = http.request(requestOptions, (res) => {
-  let responseBody = '';
-  console.log(`Antwortstatus: ${res.statusCode}`);
-  res.on('data', (chunk) => {
-    responseBody += chunk;
-  });
-  res.on('end', () => {
-    try {
-      const parsedResponse = JSON.parse(responseBody);
-      if (res.statusCode === 200) {
-        console.log('✅ E-Mail erfolgreich gesendet!');
-        console.log('Serverantwort:', parsedResponse);
-      } else {
-        console.error(`❌ Fehler beim Senden der E-Mail. Statuscode: ${res.statusCode}`);
-        console.error('Serverfehler:', parsedResponse);
+const API_PORT = 443; // Standard für HTTPS
+const API_PATH = '/api/send-email';
+const SEND_INTERVAL_MS = SEND_INTERVAL_MINUTES * 60 * 1000;
+
+
+/**
+ * Die Kernfunktion, die eine einzelne E-Mail sendet.
+ */
+function sendEmail() {
+  const emailDetails = {
+    to: RECIPIENT_EMAIL,
+    subject: `Automatisierte Test-E-Mail - ${new Date().toISOString()}`,
+    body: `
+      <h1>Automatisierter E-Mail-Worker</h1>
+      <p>Diese E-Mail wurde automatisch vom EmailSenderPro-Worker-Skript gesendet.</p>
+      <p>Zeitstempel: <strong>${new Date().toUTCString()}</strong></p>
+    `
+  };
+
+  const data = JSON.stringify(emailDetails);
+
+  const requestOptions = {
+    hostname: API_HOSTNAME,
+    port: API_PORT,
+    path: API_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'Content-Length': Buffer.byteLength(data)
+    },
+  };
+
+  console.log(`[${new Date().toISOString()}] Versuch, E-Mail an ${RECIPIENT_EMAIL} zu senden...`);
+
+  const req = https.request(requestOptions, (res) => {
+    let responseBody = '';
+    res.on('data', (chunk) => {
+      responseBody += chunk;
+    });
+
+    res.on('end', () => {
+      try {
+        const parsedResponse = JSON.parse(responseBody);
+        
+        if (res.statusCode === 200) {
+          console.log(`[${new Date().toISOString()}] ✅ Erfolg! E-Mail gesendet. Antwort:`, parsedResponse.message);
+          isRateLimited = false; // Ratenlimit-Flag bei Erfolg zurücksetzen
+        
+        } else if (res.statusCode === 429) {
+          console.warn(`[${new Date().toISOString()}] ⏸️ Tägliches Limit erreicht. Pausiere für ${rateLimitPauseHours} Stunden.`);
+          isRateLimited = true; // Ratenlimit-Flag setzen
+        
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ Fehler beim Senden der E-Mail. Status: ${res.statusCode}`);
+          console.error('Serverfehler:', parsedResponse.message || 'Keine Nachricht bereitgestellt.');
+        }
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}] Fehler beim Parsen der JSON-Antwort:`, responseBody);
       }
-    } catch (e) {
-      console.error('Konnte JSON-Antwort nicht parsen:', responseBody);
-    }
+    });
   });
-});
 
-req.on('error', (error) => {
-  console.error('Ein Fehler bei der Anfrage ist aufgetreten:', error.message);
-  console.error('Bitte stellen Sie sicher, dass der EmailSenderPro-Server unter http://localhost:9002 läuft');
-});
+  req.on('error', (error) => {
+    console.error(`[${new Date().toISOString()}] ❌ Anfragefehler:`, error.message);
+  });
 
-req.write(data);
-req.end();
+  req.write(data);
+  req.end();
+}
+
+/**
+ * Der Haupt-Job-Runner. Entscheidet basierend auf dem Ratenlimit-Status, ob eine E-Mail gesendet werden soll.
+ */
+function emailJob() {
+  if (isRateLimited) {
+    console.log(`[${new Date().toISOString()}] Derzeit ratenlimitiert. Überspringe diesen Zyklus.`);
+    return;
+  }
+  sendEmail();
+}
+
+/**
+ * Der Einstiegspunkt für den Worker.
+ */
+function main() {
+  if (API_KEY === 'IHR_API_SCHLÜSSEL_HIER') {
+    console.error("🔥🔥🔥 Bitte aktualisieren Sie die `API_KEY`-Variable im Skript, bevor Sie es ausführen! 🔥🔥🔥");
+    return; // Ausführung stoppen, wenn der API-Schlüssel nicht gesetzt ist
+  }
+
+  console.log("======================================");
+  console.log("  EmailSenderPro Worker initialisiert   ");
+  console.log("======================================");
+  console.log(`Host: https://${API_HOSTNAME}`);
+  console.log(`Intervall: ${SEND_INTERVAL_MINUTES} Minuten`);
+  console.log("Drücken Sie Strg+C, um den Worker zu stoppen.");
+  console.log("--------------------------------------");
+
+  // Job sofort beim Start ausführen
+  emailJob();
+
+  // Dann im angegebenen Intervall ausführen
+  setInterval(emailJob, SEND_INTERVAL_MS);
+
+  // Ein spezielles Intervall, um das Ratenlimit-Flag zurückzusetzen, damit der Worker es später erneut versuchen kann.
+  setInterval(() => {
+    if (isRateLimited) {
+      console.log(`[${new Date().toISOString()}] Ratenlimit-Flag wird zurückgesetzt, um es im nächsten Zyklus erneut zu versuchen.`);
+      isRateLimited = false;
+    }
+  }, rateLimitPauseHours * 60 * 60 * 1000);
+}
+
+// Worker starten
+main();
 ```
 
 <a name="python-beispiel-de"></a>
@@ -2352,7 +2680,7 @@ EmailSenderPro 是一个功能强大的全栈 Next.js 应用程序，提供了�
 *   🚀 **电子邮件发送 API**：一个简单安全的 REST API 端点 (`/api/send-email`)，可集成到任何应用程序中。
 *   ⚙️ **电子邮件配置**：从仪表板为您的电子邮件设置默认发件人名称和主题。
 *   🎨 **浅色/深色模式**：具有主题切换功能的现代化、美观的界面。
-*   📦 **NPM 包和示例**：包括一个示例客户端库以及 Node.js 和 Python 的详细示例文件。
+*   📦 **NPM 包和示例**：包括一个示例客户端库（`emailsenderpro`，v0.1.1）以及 Node.js 和 Python 的详细示例文件。
 
 ---
 
@@ -2495,73 +2823,147 @@ npm run dev
 
 ```javascript
 /**
- * @file send-test-email.js
- * @description 使用 EmailSenderPro API 发送电子邮件的示例 Node.js 脚本。
+ * @file This script has been converted into a long-running worker.
+ * It periodically sends an email using the EmailSenderPro API.
  *
- * 如何使用：
- * 1. 确保您的 EmailSenderPro 应用程序正在运行。
- * 2. 使用您仪表板中的 API 密钥更新下面的 `API_KEY` 变量。
- * 3. 从终端运行脚本：`node send-test-email.js`
+ * How to use:
+ * 1. Make sure your EmailSenderPro application has been deployed.
+ * 2. Update `API_KEY` and `API_HOSTNAME` with your actual deployment details.
+ * 3. Configure the `RECIPIENT_EMAIL` and the `SEND_INTERVAL_MINUTES`.
+ * 4. Run the script from your terminal: `node send-test-email.js`
+ *    The script will run indefinitely, sending an email at the specified interval.
  */
-const http = require('http');
+
+const https = require('https');
 
 // --- 配置 ---
-const API_KEY = 'YOUR_API_KEY_HERE';
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
-const API_PATH = '/api/send-email';
+const API_KEY = 'YOUR_API_KEY_HERE'; 
+const API_HOSTNAME = 'emailsenderpro.vercel.app'; // 您已部署应用程序的主机名
+const RECIPIENT_EMAIL = 'recipient@example.com'; // 电子邮件收件人
+const SEND_INTERVAL_MINUTES = 5; // 发送电子邮件的频率（分钟）
 
-// --- 电子邮件详情 ---
-const emailDetails = {
-  to: 'recipient@example.com',
-  subject: '来自 Node.js 的问候！',
-  body: '<h1>EmailSenderPro 太棒了！</h1><p>这封邮件是使用 <strong>Node.js</strong> 脚本发送的。</p>'
-};
+// --- Worker 状态 ---
+let isRateLimited = false;
+let rateLimitPauseHours = 12;
 
 // --- 请勿编辑此行以下内容 ---
-console.log('准备发送电子邮件...');
-const data = JSON.stringify(emailDetails);
-const requestOptions = {
-  hostname: API_HOSTNAME,
-  port: API_PORT,
-  path: API_PATH,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY,
-    'Content-Length': Buffer.byteLength(data)
-  },
-};
 
-const req = http.request(requestOptions, (res) => {
-  let responseBody = '';
-  console.log(`响应状态： ${res.statusCode}`);
-  res.on('data', (chunk) => {
-    responseBody += chunk;
-  });
-  res.on('end', () => {
-    try {
-      const parsedResponse = JSON.parse(responseBody);
-      if (res.statusCode === 200) {
-        console.log('✅ 电子邮件发送成功！');
-        console.log('服务器响应：', parsedResponse);
-      } else {
-        console.error(`❌ 发送电子邮件失败。状态码： ${res.statusCode}`);
-        console.error('服务器错误：', parsedResponse);
+const API_PORT = 443; // HTTPS 的默认端口
+const API_PATH = '/api/send-email';
+const SEND_INTERVAL_MS = SEND_INTERVAL_MINUTES * 60 * 1000;
+
+
+/**
+ * 发送单封电子邮件的核心函数。
+ */
+function sendEmail() {
+  const emailDetails = {
+    to: RECIPIENT_EMAIL,
+    subject: `自动测试电子邮件 - ${new Date().toISOString()}`,
+    body: `
+      <h1>自动电子邮件 Worker</h1>
+      <p>此电子邮件由 EmailSenderPro worker 脚本自动发送。</p>
+      <p>时间戳: <strong>${new Date().toUTCString()}</strong></p>
+    `
+  };
+
+  const data = JSON.stringify(emailDetails);
+
+  const requestOptions = {
+    hostname: API_HOSTNAME,
+    port: API_PORT,
+    path: API_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'Content-Length': Buffer.byteLength(data)
+    },
+  };
+
+  console.log(`[${new Date().toISOString()}] 正在尝试向 ${RECIPIENT_EMAIL} 发送电子邮件...`);
+
+  const req = https.request(requestOptions, (res) => {
+    let responseBody = '';
+    res.on('data', (chunk) => {
+      responseBody += chunk;
+    });
+
+    res.on('end', () => {
+      try {
+        const parsedResponse = JSON.parse(responseBody);
+        
+        if (res.statusCode === 200) {
+          console.log(`[${new Date().toISOString()}] ✅ 成功！电子邮件已发送。响应：`, parsedResponse.message);
+          isRateLimited = false; // 成功后重置速率限制标志
+        
+        } else if (res.statusCode === 429) {
+          console.warn(`[${new Date().toISOString()}] ⏸️ 已达到每日限制。暂停 ${rateLimitPauseHours} 小时。`);
+          isRateLimited = true; // 设置速率限制标志
+        
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ 发送电子邮件失败。状态： ${res.statusCode}`);
+          console.error('服务器错误：', parsedResponse.message || '未提供消息。');
+        }
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}] 解析 JSON 响应时出错：`, responseBody);
       }
-    } catch (e) {
-      console.error('无法解析 JSON 响应：', responseBody);
-    }
+    });
   });
-});
 
-req.on('error', (error) => {
-  console.error('请求发生错误：', error.message);
-  console.error('请确保 EmailSenderPro 服务器正在 http://localhost:9002 上运行');
-});
+  req.on('error', (error) => {
+    console.error(`[${new Date().toISOString()}] ❌ 请求错误：`, error.message);
+  });
 
-req.write(data);
-req.end();
+  req.write(data);
+  req.end();
+}
+
+/**
+ * 主要作业运行程序。根据速率限制状态决定是否发送电子邮件。
+ */
+function emailJob() {
+  if (isRateLimited) {
+    console.log(`[${new Date().toISOString()}] 当前受速率限制。跳过此周期。`);
+    return;
+  }
+  sendEmail();
+}
+
+/**
+ * Worker 的入口点。
+ */
+function main() {
+  if (API_KEY === 'YOUR_API_KEY_HERE') {
+    console.error("🔥🔥🔥 请在运行脚本前更新 `API_KEY` 变量！ 🔥🔥🔥");
+    return; // 如果未设置 API 密钥，则停止执行
+  }
+
+  console.log("======================================");
+  console.log("  EmailSenderPro Worker 已初始化   ");
+  console.log("======================================");
+  console.log(`主机: https://${API_HOSTNAME}`);
+  console.log(`间隔: ${SEND_INTERVAL_MINUTES} 分钟`);
+  console.log("按 Ctrl+C 停止 worker。");
+  console.log("--------------------------------------");
+
+  // 启动时立即运行作业
+  emailJob();
+
+  // 然后按指定间隔运行
+  setInterval(emailJob, SEND_INTERVAL_MS);
+
+  // 一个特殊的间隔，用于重置速率限制标志，允许 worker 稍后重试。
+  setInterval(() => {
+    if (isRateLimited) {
+      console.log(`[${new Date().toISOString()}] 重置速率限制标志以便在下一个周期重试。`);
+      isRateLimited = false;
+    }
+  }, rateLimitPauseHours * 60 * 60 * 1000);
+}
+
+// 启动 worker
+main();
 ```
 
 <a name="python-示例-zh"></a>
@@ -2786,7 +3188,7 @@ EmailSenderProは、メールを送信するためのシンプルで安全なAPI
 *   🚀 **メール送信API**: 任意のアプリケーションに統合できる、シンプルで安全なREST APIエンドポイント (`/api/send-email`)。
 *   ⚙️ **メール設定**: ダッシュボードからメールのデフォルトの送信者名と件名を設定します。
 *   🎨 **ライト/ダークモード**: テーマ切り替え機能を備えた、モダンで美しいインターフェース。
-*   📦 **NPMパッケージと例**: サンプルクライアントライブラリと、Node.jsおよびPython用の詳細なサンプルファイルが含まれています。
+*   📦 **NPMパッケージと例**: サンプルクライアントライブラリ（`emailsenderpro`、v0.1.1）と、Node.jsおよびPython用の詳細なサンプルファイルが含まれています。
 
 ---
 
@@ -2929,73 +3331,147 @@ APIはAPIキーベースの認証を使用します。各メール送信リク�
 
 ```javascript
 /**
- * @file send-test-email.js
- * @description EmailSenderPro APIを使用してメールを送信するサンプルNode.jsスクリプト。
+ * @file このスクリプトは、長時間実行されるワーカーに変換されました。
+ * EmailSenderPro APIを使用して定期的にメールを送信します。
  *
  * 使い方:
- * 1. EmailSenderProアプリケーションが実行されていることを確認してください。
- * 2. 以下の `API_KEY` 変数をダッシュボードのAPIキーで更新してください。
- * 3. ターミナルからスクリプトを実行します: `node send-test-email.js`
+ * 1. EmailSenderProアプリケーションがデプロイされていることを確認してください。
+ * 2. `API_KEY` と `API_HOSTNAME` を実際のデプロイメント詳細で更新してください。
+ * 3. `RECIPIENT_EMAIL` と `SEND_INTERVAL_MINUTES` を設定してください。
+ * 4. ターミナルからスクリプトを実行します: `node send-test-email.js`
+ *    スクリプトは無期限に実行され、指定された間隔でメールを送信します。
  */
-const http = require('http');
+
+const https = require('https');
 
 // --- 設定 ---
-const API_KEY = 'YOUR_API_KEY_HERE';
-const API_HOSTNAME = 'localhost';
-const API_PORT = 9002;
-const API_PATH = '/api/send-email';
+const API_KEY = 'YOUR_API_KEY_HERE'; 
+const API_HOSTNAME = 'emailsenderpro.vercel.app'; // デプロイされたアプリのホスト名
+const RECIPIENT_EMAIL = 'recipient@example.com'; // メールを送信する相手
+const SEND_INTERVAL_MINUTES = 5; // メールを送信する頻度
 
-// --- メールの詳細 ---
-const emailDetails = {
-  to: 'recipient@example.com',
-  subject: 'Node.jsからのこんにちは！',
-  body: '<h1>EmailSenderProは最高です！</h1><p>このメールは<strong>Node.js</strong>スクリプトを使用して送信されました。</p>'
-};
+// --- ワーカーの状態 ---
+let isRateLimited = false;
+let rateLimitPauseHours = 12;
 
 // --- この行より下は編集しないでください ---
-console.log('メールの送信準備中...');
-const data = JSON.stringify(emailDetails);
-const requestOptions = {
-  hostname: API_HOSTNAME,
-  port: API_PORT,
-  path: API_PATH,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': API_KEY,
-    'Content-Length': Buffer.byteLength(data)
-  },
-};
 
-const req = http.request(requestOptions, (res) => {
-  let responseBody = '';
-  console.log(`レスポンスステータス: ${res.statusCode}`);
-  res.on('data', (chunk) => {
-    responseBody += chunk;
-  });
-  res.on('end', () => {
-    try {
-      const parsedResponse = JSON.parse(responseBody);
-      if (res.statusCode === 200) {
-        console.log('✅ メールは正常に送信されました！');
-        console.log('サーバーからのレスポンス:', parsedResponse);
-      } else {
-        console.error(`❌ メールの送信に失敗しました。ステータスコード: ${res.statusCode}`);
-        console.error('サーバーエラー:', parsedResponse);
+const API_PORT = 443; // HTTPSのデフォルト
+const API_PATH = '/api/send-email';
+const SEND_INTERVAL_MS = SEND_INTERVAL_MINUTES * 60 * 1000;
+
+
+/**
+ * 1通のメールを送信するコア機能。
+ */
+function sendEmail() {
+  const emailDetails = {
+    to: RECIPIENT_EMAIL,
+    subject: `自動テストメール - ${new Date().toISOString()}`,
+    body: `
+      <h1>自動メールワーカー</h1>
+      <p>このメールはEmailSenderProワーカースクリプトによって自動的に送信されました。</p>
+      <p>タイムスタンプ: <strong>${new Date().toUTCString()}</strong></p>
+    `
+  };
+
+  const data = JSON.stringify(emailDetails);
+
+  const requestOptions = {
+    hostname: API_HOSTNAME,
+    port: API_PORT,
+    path: API_PATH,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      'Content-Length': Buffer.byteLength(data)
+    },
+  };
+
+  console.log(`[${new Date().toISOString()}] ${RECIPIENT_EMAIL}へのメール送信を試みています...`);
+
+  const req = https.request(requestOptions, (res) => {
+    let responseBody = '';
+    res.on('data', (chunk) => {
+      responseBody += chunk;
+    });
+
+    res.on('end', () => {
+      try {
+        const parsedResponse = JSON.parse(responseBody);
+        
+        if (res.statusCode === 200) {
+          console.log(`[${new Date().toISOString()}] ✅ 成功！メールが送信されました。レスポンス:`, parsedResponse.message);
+          isRateLimited = false; // 成功時にレート制限フラグをリセット
+        
+        } else if (res.statusCode === 429) {
+          console.warn(`[${new Date().toISOString()}] ⏸️ 1日の制限に達しました。${rateLimitPauseHours}時間一時停止します。`);
+          isRateLimited = true; // レート制限フラグを設定
+        
+        } else {
+          console.error(`[${new Date().toISOString()}] ❌ メールの送信に失敗しました。ステータス: ${res.statusCode}`);
+          console.error('サーバーエラー:', parsedResponse.message || 'メッセージが提供されていません。');
+        }
+      } catch (e) {
+        console.error(`[${new Date().toISOString()}] JSONレスポンスの解析中にエラーが発生しました:`, responseBody);
       }
-    } catch (e) {
-      console.error('JSONレスポンスの解析に失敗しました:', responseBody);
-    }
+    });
   });
-});
 
-req.on('error', (error) => {
-  console.error('リクエストでエラーが発生しました:', error.message);
-  console.error('EmailSenderProサーバーが http://localhost:9002 で実行されていることを確認してください');
-});
+  req.on('error', (error) => {
+    console.error(`[${new Date().toISOString()}] ❌ リクエストエラー:`, error.message);
+  });
 
-req.write(data);
-req.end();
+  req.write(data);
+  req.end();
+}
+
+/**
+ * メインのジョブランナー。レート制限ステータスに基づいてメールを送信するかどうかを決定します。
+ */
+function emailJob() {
+  if (isRateLimited) {
+    console.log(`[${new Date().toISOString()}] 現在レート制限中です。このサイクルをスキップします。`);
+    return;
+  }
+  sendEmail();
+}
+
+/**
+ * ワーカーのエントリーポイント。
+ */
+function main() {
+  if (API_KEY === 'YOUR_API_KEY_HERE') {
+    console.error("🔥🔥🔥 実行する前にスクリプトの `API_KEY` 変数を更新してください！ 🔥🔥🔥");
+    return; // APIキーが設定されていない場合は実行を停止
+  }
+
+  console.log("======================================");
+  console.log("  EmailSenderProワーカーが初期化されました   ");
+  console.log("======================================");
+  console.log(`ホスト: https://${API_HOSTNAME}`);
+  console.log(`間隔: ${SEND_INTERVAL_MINUTES}分`);
+  console.log("ワーカーを停止するには Ctrl+C を押してください。");
+  console.log("--------------------------------------");
+
+  // 起動時にすぐにジョブを実行
+  emailJob();
+
+  // その後、指定された間隔で実行
+  setInterval(emailJob, SEND_INTERVAL_MS);
+
+  // レート制限フラグをリセットするための特別な間隔。これにより、ワーカーは後で再試行できます。
+  setInterval(() => {
+    if (isRateLimited) {
+      console.log(`[${new Date().toISOString()}] 次のサイクルで再試行するためにレート制限フラグをリセットしています。`);
+      isRateLimited = false;
+    }
+  }, rateLimitPauseHours * 60 * 60 * 1000);
+}
+
+// ワーカーを開始
+main();
 ```
 
 <a name="python-の例-ja"></a>

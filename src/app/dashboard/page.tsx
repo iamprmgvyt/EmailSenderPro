@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BarChart, Key, Eye, EyeOff } from 'lucide-react';
+import { BarChart, Key, Package, Info } from 'lucide-react';
 import DashboardView from './DashboardView';
 import { jwtVerify } from 'jose';
 import dbConnect from '@/lib/dbConnect';
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
                     <Key className="h-4 w-4" />
                     <AlertTitle className="font-headline">Your API Key</AlertTitle>
                     <AlertDescription className="mt-2">
-                        Use this key to send emails via our service. Keep it secure!
+                        Use this key in the 'x-api-key' header to send emails. Keep it secure!
                     </AlertDescription>
                     <div className="mt-4 flex items-center gap-4">
                         <code className="relative flex-grow rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
@@ -121,21 +121,53 @@ export default async function DashboardPage() {
                 </Alert>
 
                 <Alert className="bg-card animate-fade-in [animation-delay:200ms]">
-                    <AlertTitle className="font-headline">Example Usage</AlertTitle>
+                    <Package className="h-4 w-4" />
+                    <AlertTitle className="font-headline">Node.js Example</AlertTitle>
                     <AlertDescription className="mt-2">
-                        Here&apos;s a basic example of how to use our NPM package:
+                        Here&apos;s a quick example of how to send an email using our NPM package.
                     </AlertDescription>
                     <div className="mt-4 rounded-md bg-muted p-4">
-                        <pre className="text-sm font-code">
+                        <pre className="text-sm font-code overflow-x-auto">
                             <code>
-{`const sender = require('emailsenderpro');
+{`const { send } = require('emailsenderpro');
 
-sender.send({ 
-  apiKey: 'YOUR_API_KEY_HERE', 
-  to: 'recipient@example.com',
-  subject: 'Hello World',
-  body: 'This is a test email.'
-});`}
+async function main() {
+  try {
+    const result = await send({ 
+      apiKey: 'YOUR_API_KEY_HERE', 
+      to: 'recipient@example.com',
+      subject: 'Hello from Node.js!',
+      body: '<h1>This is a test email.</h1>'
+    });
+    console.log('Success:', result);
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+}
+
+main();`}
+                            </code>
+                        </pre>
+                    </div>
+                </Alert>
+
+                <Alert className="bg-card animate-fade-in [animation-delay:400ms]">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle className="font-headline">cURL Example</AlertTitle>
+                    <AlertDescription className="mt-2">
+                        You can also send emails directly via a cURL command.
+                    </AlertDescription>
+                    <div className="mt-4 rounded-md bg-muted p-4">
+                         <pre className="text-sm font-code overflow-x-auto">
+                            <code>
+{`curl -X POST https://yourapp.com/api/send-email \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: YOUR_API_KEY_HERE" \\
+  -d '{
+    "to": "recipient@example.com",
+    "subject": "Hello from cURL",
+    "body": "This is a test."
+  }'`}
                             </code>
                         </pre>
                     </div>
